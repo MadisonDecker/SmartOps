@@ -1,0 +1,98 @@
+@using SmartOps.Models
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Team Management</h5>
+    </div>
+    <div class="card-body">
+        @if (!SelectedWorkgroups.Any())
+        {
+            <div class="alert alert-info" role="alert">
+                Please select one or more workgroups to view team members.
+            </div>
+        }
+        else
+        {
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" placeholder="Search by name..." @bind="searchTerm" @onkeyup="OnSearchChange" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Filter by Skill:</label>
+                    <select class="form-select" @bind="selectedSkill" @bind:event="onchange">
+                        <option value="">All Skills</option>
+                        @foreach (var skill in availableSkills)
+                        {
+                            <option value="@skill">@skill</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Workgroup</th>
+                            <th>Status</th>
+                            <th>Skills</th>
+                            <th>This Week Hours</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (filteredEmployees != null)
+                        {
+                            @foreach (var emp in filteredEmployees)
+                            {
+                                <tr>
+                                    <td>@emp.EmployeeId</td>
+                                    <td>@emp.Division</td>
+                                    <td>
+                                        <span class="badge @(emp.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(emp.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (emp.Skills.Any())
+                                        {
+                                            @foreach (var skill in emp.Skills.Take(2))
+                                            {
+                                                <span class="badge bg-info">@skill.SkillCode</span>
+                                            }
+                                            @if (emp.Skills.Count > 2)
+                                            {
+                                                <span class="badge bg-secondary">+@(emp.Skills.Count - 2)</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@GetEmployeeWeeklyHours(emp.EmployeeId)</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => ShowAssignShiftModal(emp.EmployeeId))">
+                                            Assign Shift
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" @onclick="@(() => ShowDetailsModal(emp))">
+                                            Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (filteredEmployees == null || !filteredEmployees.Any())
+            {
+                <div class="alert alert-info mt-3" role="alert">
+                    No employees found matching your filters.
+                </div>
+            }
+        }
+    </div>
+</div>

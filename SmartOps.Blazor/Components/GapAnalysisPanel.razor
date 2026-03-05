@@ -1,0 +1,79 @@
+@using SmartOps.Models
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Gap Analysis Report</h5>
+    </div>
+    <div class="card-body">
+        @if (!SelectedWorkgroups.Any())
+        {
+            <div class="alert alert-info" role="alert">
+                Please select one or more workgroups to view gap analysis.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning" role="alert">
+                <strong>Critical Gaps This Week:</strong> 
+                <span class="badge bg-danger">@criticalGaps</span> hours understaffed
+            </div>
+
+            <h6 class="mb-3">Gaps by Day</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Hours with Gap</th>
+                            <th>Total Gap Hours</th>
+                            <th>Available Staff</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int day = 0; day < 7; day++)
+                        {
+                            var date = WeekStart.AddDays(day);
+                            <tr>
+                                <td>@date.ToString("ddd, MMM dd")</td>
+                                <td>@GetGapHours(date)</td>
+                                <td>@GetTotalGapHours(date)</td>
+                                <td>@GetAvailableStaff(date)</td>
+                                <td>
+                                    @if (GetTotalGapHours(date) > 8)
+                                    {
+                                        <span class="badge bg-danger">Critical</span>
+                                    }
+                                    else if (GetTotalGapHours(date) > 4)
+                                    {
+                                        <span class="badge bg-warning">Warning</span>
+                                    }
+                                    else if (GetTotalGapHours(date) > 0)
+                                    {
+                                        <span class="badge bg-info">Minor</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Covered</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <h6 class="mb-3">Recommended Actions</h6>
+                <ul class="list-group">
+                    @foreach (var action in GetRecommendedActions())
+                    {
+                        <li class="list-group-item">
+                            <strong>@action.time</strong>: @action.description
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>

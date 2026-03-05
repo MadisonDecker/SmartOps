@@ -1,0 +1,110 @@
+@using SmartOps.Models
+@using Microsoft.AspNetCore.Components
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Schedule Overview - Weekly Graph</h5>
+        <div class="btn-group btn-group-sm">
+            <button class="btn @(viewMode == "daily" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetViewMode("daily"))">Daily</button>
+            <button class="btn @(viewMode == "hourly" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetViewMode("hourly"))">Hourly</button>
+            <button class="btn @(viewMode == "halfhour" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetViewMode("halfhour"))">Half Hour</button>
+            <button class="btn @(viewMode == "quarter" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetViewMode("quarter"))">Quarter Hour</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="chart-container">
+            <svg width="100%" height="250" viewBox="0 0 @svgWidth @svgHeight" preserveAspectRatio="xMidYMid meet">
+                <!-- Grid lines -->
+                    @for (int i = 0; i <= 4; i++)
+                    {
+                        var y = chartPadding + (chartHeight * i / 4);
+                        var labelValue = GetMaxValue() - (GetMaxValue() * i / 4);
+                        <line x1="@chartPadding" y1="@y" x2="@(svgWidth - 20)" y2="@y" stroke="#e5e7eb" stroke-width="1" />
+                        @((MarkupString)$"<text x=\"{chartPadding - 10}\" y=\"{y + 4}\" text-anchor=\"end\" fill=\"#6b7280\" font-size=\"11\">{labelValue:F1}</text>")
+                    }
+
+                <!-- Required FTE line with gradient fill -->
+                <defs>
+                    <linearGradient id="requiredGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
+                        <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.05" />
+                    </linearGradient>
+                    <linearGradient id="assignedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                        <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.05" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Area fill for required -->
+                <path d="@GetAreaPath(true)" fill="url(#requiredGradient)" />
+                <!-- Area fill for assigned -->
+                <path d="@GetAreaPath(false)" fill="url(#assignedGradient)" />
+
+                <!-- Required FTE line -->
+                <polyline points="@GetLinePath(true)" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+                <!-- Assigned FTE line -->
+                <polyline points="@GetLinePath(false)" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+                <!-- Data points for required -->
+                @foreach (var point in GetDataPoints(true))
+                {
+                    <circle cx="@point.X" cy="@point.Y" r="@GetDataPointRadius()" fill="#4f46e5" stroke="#fff" stroke-width="2" class="data-point">
+                        <title>Required FTE: @point.Value.ToString("F2")</title>
+                    </circle>
+                }
+
+                <!-- Data points for assigned -->
+                @foreach (var point in GetDataPoints(false))
+                {
+                    <circle cx="@point.X" cy="@point.Y" r="@GetDataPointRadius()" fill="#059669" stroke="#fff" stroke-width="2" class="data-point">
+                        <title>Assigned FTE: @point.Value.ToString("F2")</title>
+                    </circle>
+                }
+
+                <!-- X-axis labels -->
+                    @foreach (var label in GetXAxisLabels())
+                    {
+                        @((MarkupString)$"<text x=\"{label.X:F1}\" y=\"{svgHeight - 5}\" text-anchor=\"middle\" fill=\"#6b7280\" font-size=\"{GetLabelFontSize()}\">{label.Text}</text>")
+                        @if (!string.IsNullOrEmpty(label.SubText))
+                        {
+                            @((MarkupString)$"<text x=\"{label.X:F1}\" y=\"{svgHeight + 8}\" text-anchor=\"middle\" fill=\"#9ca3af\" font-size=\"9\">{label.SubText}</text>")
+                        }
+                    }
+            </svg>
+        </div>
+
+        <div class="mt-3 d-flex justify-content-center gap-4">
+            <div><span class="legend-line legend-required"></span> Required FTE</div>
+            <div><span class="legend-line legend-assigned"></span> Assigned FTE</div>
+            <div class="text-muted small">(FTE = Full Time Equivalent, @GetIntervalDescription())</div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .legend-line {
+        display: inline-block;
+        width: 20px;
+        height: 3px;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    .legend-required {
+        background-color: #4f46e5;
+    }
+
+    .legend-assigned {
+        background-color: #059669;
+    }
+
+    .data-point {
+        cursor: pointer;
+        transition: r 0.2s ease;
+    }
+
+    .data-point:hover {
+        r: 7;
+    }
+</style>

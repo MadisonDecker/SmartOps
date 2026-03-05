@@ -1,0 +1,122 @@
+@page "/schedule"
+@using SmartOps.Models
+@using SmartShift.Blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">My Schedule</h1>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Next Shift</h5>
+                    @if (nextShift != null)
+                    {
+                        <p class="mb-1"><strong>@nextShift.Division</strong></p>
+                        <p class="mb-1">@nextShift.StartTime:HH:mm - @nextShift.EndTime:HH:mm</p>
+                        <p class="text-muted">@((nextShift.StartTime - DateTime.Now).TotalHours > 0 ? $"In {Math.Floor((nextShift.StartTime - DateTime.Now).TotalHours)} hours" : "Today")</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No upcoming shifts</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">This Week Hours</h5>
+                    <h3>@weeklyHours.ToString("F1")</h3>
+                    <p class="text-muted">hours scheduled</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Weekly Schedule</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="PreviousWeek">← Previous</button>
+                            <span class="mx-2">Week of @weekStart.ToString("MMM dd")</span>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="NextWeek">Next →</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (shifts != null && shifts.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Division</th>
+                                        <th>Client</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var shift in shifts.OrderBy(s => s.StartTime))
+                                    {
+                                        <tr>
+                                            <td>@shift.StartTime.ToString("ddd, MMM dd")</td>
+                                            <td>@shift.Division</td>
+                                            <td>@(shift.ClientName ?? "-")</td>
+                                            <td>@shift.StartTime.ToString("HH:mm")</td>
+                                            <td>@shift.EndTime.ToString("HH:mm")</td>
+                                            <td>@Math.Round((shift.EndTime - shift.StartTime).TotalHours, 2) hrs</td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(shift.Status)">
+                                                    @shift.Status
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        @if (shift.Breaks.Any())
+                                        {
+                                            <tr class="table-light">
+                                                <td colspan="7">
+                                                    <small class="text-muted">
+                                                        <strong>Breaks:</strong>
+                                                        @foreach (var breakItem in shift.Breaks)
+                                                        {
+                                                            <span class="badge bg-info me-2">
+                                                                @breakItem.BreakType @breakItem.StartTime.ToString("HH:mm")-@breakItem.EndTime.ToString("HH:mm")
+                                                                @if (breakItem.IsTaken)
+                                                                {
+                                                                    <span>✓</span>
+                                                                }
+                                                            </span>
+                                                        }
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-4">No shifts scheduled for this week</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

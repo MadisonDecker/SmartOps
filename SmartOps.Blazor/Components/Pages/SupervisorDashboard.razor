@@ -1,0 +1,172 @@
+@page "/supervisor/dashboard"
+@using SmartOps.Models
+@using SmartOps.Models.Extensions
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Supervisor,Admin")]
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>SmartOps Dashboard</h1>
+            <p class="text-muted">Manage schedules, FTE requirements, and team assignments</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Client</label>
+            <select class="form-select" @onchange="OnClientChanged" disabled="@(selectedWorkgroups.Count == 0)">
+                <option value="">All Clients</option>
+                @foreach (var client in clients)
+                {
+                    <option value="@client.Id">@client.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Workgroups</label>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
+                        data-bs-toggle="dropdown" aria-expanded="false" id="workgroupDropdown">
+                    @GetWorkgroupSelectionText()
+                </button>
+                <ul class="dropdown-menu w-100 p-2" aria-labelledby="workgroupDropdown" style="max-height: 300px; overflow-y: auto;">
+                    <li>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllWorkgroups" 
+                                   checked="@(selectedWorkgroups.Count == workgroups.Count && workgroups.Count > 0)"
+                                   @onchange="OnSelectAllWorkgroupsChanged" />
+                            <label class="form-check-label fw-bold" for="selectAllWorkgroups">Select All</label>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (var workgroup in workgroups)
+                    {
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="wg_@workgroup.Code" 
+                                       checked="@selectedWorkgroups.Any(w => w.Id == workgroup.Id)"
+                                       @onchange="@(e => OnWorkgroupToggled(workgroup, e))" />
+                                <label class="form-check-label" for="wg_@workgroup.Code">@workgroup.Name</label>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Week</label>
+            <div class="input-group">
+                <button class="btn btn-outline-secondary" @onclick="PreviousWeek">←</button>
+                <input type="date" class="form-control" @onchange="OnWeekChanged" />
+                <button class="btn btn-outline-secondary" @onclick="NextWeek">→</button>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary w-100" @onclick="RefreshData">Refresh</button>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Required FTE</h6>
+                    <h3>@totalRequired.ToString("F1")</h3>
+                    <small class="text-muted">this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Scheduled FTE</h6>
+                    <h3>@totalScheduled.ToString("F1")</h3>
+                    <small class="text-muted">this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">FTE Gap</h6>
+                    <h3 class="text-warning">@totalGap.ToString("F1")</h3>
+                    <small class="text-muted">FTE short</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Efficiency</h6>
+                    <h3>@(totalRequired > 0 ? (totalScheduled / totalRequired * 100).ToString("F0") : 0)%</h3>
+                    <small class="text-muted">coverage</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Graph -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ScheduleGraphPanel SelectedWorkgroups="selectedWorkgroups" 
+                SelectedClient="selectedClient" WeekStart="weekStart" />
+        </div>
+    </div>
+
+    <!-- Tabs for different views -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "schedule" ? "active" : "")" @onclick="@(() => SelectTab("schedule"))">
+                        Schedule Grid
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "requirements" ? "active" : "")" @onclick="@(() => SelectTab("requirements"))">
+                        FTE Requirements
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "gaps" ? "active" : "")" @onclick="@(() => SelectTab("gaps"))">
+                        Gap Analysis
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "team" ? "active" : "")" @onclick="@(() => SelectTab("team"))">
+                        Team
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                @if (activeTab == "schedule")
+                {
+                    <ScheduleGrid Workgroups="workgroups" SelectedWorkgroups="selectedWorkgroups" 
+                        SelectedClient="selectedClient" WeekStart="weekStart" />
+                }
+                @if (activeTab == "requirements")
+                {
+                    <StaffingRequirementsPanel SelectedWorkgroups="selectedWorkgroups" 
+                        SelectedClient="selectedClient" />
+                }
+                @if (activeTab == "gaps")
+                {
+                    <GapAnalysisPanel SelectedWorkgroups="selectedWorkgroups" 
+                        SelectedClient="selectedClient" WeekStart="weekStart" />
+                }
+                @if (activeTab == "team")
+                {
+                    <TeamManagementPanel SelectedWorkgroups="selectedWorkgroups" 
+                        SelectedClient="selectedClient" />
+                }
+            </div>
+        </div>
+    </div>
+</div>

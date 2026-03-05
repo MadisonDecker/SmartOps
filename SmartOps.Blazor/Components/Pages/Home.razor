@@ -1,0 +1,59 @@
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>SmartOps - Workforce Management</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Welcome to SmartOps</h1>
+            <p class="lead">Workforce Management & Operations Dashboard</p>
+        </div>
+    </div>
+
+    <AuthorizeView Roles="Supervisor,Admin">
+        <Authorized>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <span class="bi bi-graph-up"></span> Workforce Dashboard
+                            </h5>
+                            <p class="card-text">View and manage schedules, staffing requirements, and team assignments.</p>
+                            <a href="supervisor/dashboard" class="btn btn-primary">Go to Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <span class="bi bi-people"></span> Team Management
+                            </h5>
+                            <p class="card-text">Manage your team members, skills, and availability.</p>
+                            <a href="supervisor/dashboard" class="btn btn-outline-primary">View Team</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <span class="bi bi-bar-chart"></span> Gap Analysis
+                            </h5>
+                            <p class="card-text">Analyze staffing gaps and get recommendations.</p>
+                            <a href="supervisor/dashboard" class="btn btn-outline-primary">View Gaps</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-info mt-4">
+                <strong>Access Required:</strong> You need Supervisor or Admin permissions to access workforce management features.
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>

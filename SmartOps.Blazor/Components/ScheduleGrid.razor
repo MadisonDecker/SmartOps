@@ -1,0 +1,131 @@
+@using SmartOps.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Schedule Grid - Interval View</h5>
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small">Interval:</label>
+            <select class="form-select form-select-sm" style="width: 100px;" @bind="IntervalMinutes" @bind:event="onchange">
+                <option value="15">15 min</option>
+                <option value="30">30 min</option>
+                <option value="60">60 min</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered schedule-grid">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">Time</th>
+                        @for (int day = 0; day < 7; day++)
+                        {
+                            var date = WeekStart.AddDays(day);
+                            <th class="text-center">
+                                <div>@date.ToString("ddd")</div>
+                                <small>@date.ToString("MMM dd")</small>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var timeSlot in GetTimeSlots())
+                    {
+                        <tr>
+                            <td class="bg-light fw-bold">@timeSlot.ToString(@"hh\:mm")</td>
+                            @for (int day = 0; day < 7; day++)
+                            {
+                                var date = WeekStart.AddDays(day);
+                                var dateTime = date.Add(timeSlot);
+                                <td class="p-2 schedule-cell" style="min-height: 60px; vertical-align: top; position: relative;">
+                                    <div class="schedule-slot" style="font-size: 0.85rem;">
+                                        <div class="fte-required badge bg-primary mb-1" title="Required FTE">R: @GetRequiredFTE(dateTime).ToString("F2")</div>
+                                        <div class="fte-assigned badge bg-success" title="Assigned FTE">A: @GetAssignedFTE(dateTime).ToString("F2")</div>
+                                        @{
+                                            var gap = GetRequiredFTE(dateTime) - GetAssignedFTE(dateTime);
+                                            if (gap > 0.01m)
+                                            {
+                                                <div class="gap-indicator badge bg-danger" title="FTE Gap">Gap: @gap.ToString("F2")</div>
+                                            }
+                                            else if (gap < -0.01m)
+                                            {
+                                                <div class="over-indicator badge bg-warning" title="FTE Over">Over: @Math.Abs(gap).ToString("F2")</div>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3">
+            <h6>Legend:</h6>
+            <span class="badge bg-primary me-2">R = Required FTE</span>
+            <span class="badge bg-success me-2">A = Assigned FTE</span>
+            <span class="badge bg-danger me-2">Red = Under-staffed</span>
+            <span class="badge bg-warning me-2">Yellow = Over-staffed</span>
+            <span class="text-muted small ms-3">FTE = Full Time Equivalent (1.0 = one person for the full interval)</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.schedule-grid {
+    margin-bottom: 0;
+}
+
+.schedule-grid tbody td:first-child {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border-right: 2px solid #d1d5db;
+    font-weight: 600;
+    color: #374151;
+}
+
+.schedule-grid thead {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-bottom: 2px solid #0284c7;
+}
+
+.schedule-cell {
+    background: linear-gradient(to bottom, #f8f9fa 0%, #fff 100%);
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+.schedule-cell:hover {
+    background: linear-gradient(to bottom, #fff 0%, #f8f9fa 100%);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-color: #d0d0d0;
+}
+
+.schedule-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.schedule-slot .badge {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+}
+
+.staff-required {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+}
+
+.staff-assigned {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.gap-indicator {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.over-indicator {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+</style>

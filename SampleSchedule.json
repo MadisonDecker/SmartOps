@@ -1,0 +1,251 @@
+{
+  "description": "Sample schedule for testing purposes",
+  "schedules": [
+    {
+      "externalMatchId": "01306033",
+      "effectiveDate": "2026-02-16",
+      "durationInSeconds": 28800, //is this minus breaks?
+      "shifts": [
+        {
+          "shiftName": "Monday Shift",
+          "startAt": "2026-02-16T08:00:00Z",
+          "endAt": "2026-02-16T16:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-16T12:00:00Z",
+              "endTimestamp": "2026-02-16T12:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-16T14:00:00Z",
+              "endTimestamp": "2026-02-16T14:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        },
+        {
+          "shiftName": "Tuesday Shift",
+          "startAt": "2026-02-17T08:30:00Z",
+          "endAt": "2026-02-17T16:30:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-17T12:30:00Z",
+              "endTimestamp": "2026-02-17T13:30:00Z",
+              "durationInSeconds": 3600
+            }
+          ]
+        },
+        {
+          "shiftName": "Wednesday Shift",
+          "startAt": "2026-02-18T08:00:00Z",
+          "endAt": "2026-02-18T16:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-18T12:00:00Z",
+              "endTimestamp": "2026-02-18T12:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-18T14:00:00Z",
+              "endTimestamp": "2026-02-18T14:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        },
+        {
+          "shiftName": "Thursday Shift",
+          "startAt": "2026-02-19T08:00:00Z",
+          "endAt": "2026-02-19T16:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-19T12:00:00Z",
+              "endTimestamp": "2026-02-19T13:00:00Z",
+              "durationInSeconds": 3600
+            }
+          ]
+        },
+        {
+          "shiftName": "Friday Shift",
+          "startAt": "2026-02-20T08:00:00Z",
+          "endAt": "2026-02-20T16:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-20T12:00:00Z",
+              "endTimestamp": "2026-02-20T12:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-20T14:00:00Z",
+              "endTimestamp": "2026-02-20T14:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalMatchId": "013061",
+      "effectiveDate": "2026-02-16",
+      "durationInSeconds": 28800,
+      "shifts": [
+        {
+          "shiftName": "Monday Shift",
+          "startAt": "2026-02-16T09:00:00Z",
+          "endAt": "2026-02-16T17:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-16T13:00:00Z",
+              "endTimestamp": "2026-02-16T13:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-16T15:00:00Z",
+              "endTimestamp": "2026-02-16T15:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        },
+        {
+          "shiftName": "Tuesday Shift",
+          "startAt": "2026-02-17T09:00:00Z",
+          "endAt": "2026-02-17T17:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-17T13:00:00Z",
+              "endTimestamp": "2026-02-17T14:00:00Z",
+              "durationInSeconds": 3600
+            }
+          ]
+        },
+        {
+          "shiftName": "Wednesday Shift",
+          "startAt": "2026-02-18T09:00:00Z",
+          "endAt": "2026-02-18T17:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-18T13:00:00Z",
+              "endTimestamp": "2026-02-18T13:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-18T15:00:00Z",
+              "endTimestamp": "2026-02-18T15:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        },
+        {
+          "shiftName": "Thursday Shift",
+          "startAt": "2026-02-19T09:00:00Z",
+          "endAt": "2026-02-19T17:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-19T13:00:00Z",
+              "endTimestamp": "2026-02-19T14:00:00Z",
+              "durationInSeconds": 3600
+            }
+          ]
+        },
+        {
+          "shiftName": "Friday Shift",
+          "startAt": "2026-02-20T09:00:00Z",
+          "endAt": "2026-02-20T17:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-20T13:00:00Z",
+              "endTimestamp": "2026-02-20T13:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-20T15:00:00Z",
+              "endTimestamp": "2026-02-20T15:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "externalMatchId": "013062",
+      "effectiveDate": "2026-02-16",
+      "durationInSeconds": 28800,
+      "shifts": [
+        {
+          "shiftName": "Monday Shift",
+          "startAt": "2026-02-16T07:00:00Z",
+          "endAt": "2026-02-16T15:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-16T11:00:00Z",
+              "endTimestamp": "2026-02-16T11:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-16T13:00:00Z",
+              "endTimestamp": "2026-02-16T13:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        },
+        {
+          "shiftName": "Tuesday Shift",
+          "startAt": "2026-02-17T07:00:00Z",
+          "endAt": "2026-02-17T15:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-17T11:00:00Z",
+              "endTimestamp": "2026-02-17T12:00:00Z",
+              "durationInSeconds": 3600
+            }
+          ]
+        },
+        {
+          "shiftName": "Wednesday Shift",
+          "startAt": "2026-02-18T07:00:00Z",
+          "endAt": "2026-02-18T15:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-18T11:00:00Z",
+              "endTimestamp": "2026-02-18T11:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-18T13:00:00Z",
+              "endTimestamp": "2026-02-18T13:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        },
+        {
+          "shiftName": "Thursday Shift",
+          "startAt": "2026-02-19T07:00:00Z",
+          "endAt": "2026-02-19T15:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-19T11:00:00Z",
+              "endTimestamp": "2026-02-19T12:00:00Z",
+              "durationInSeconds": 3600
+            }
+          ]
+        },
+        {
+          "shiftName": "Friday Shift",
+          "startAt": "2026-02-20T07:00:00Z",
+          "endAt": "2026-02-20T15:00:00Z",
+          "breaks": [
+            {
+              "startTimestamp": "2026-02-20T11:00:00Z",
+              "endTimestamp": "2026-02-20T11:30:00Z",
+              "durationInSeconds": 1800
+            },
+            {
+              "startTimestamp": "2026-02-20T13:00:00Z",
+              "endTimestamp": "2026-02-20T13:30:00Z",
+              "durationInSeconds": 1800
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

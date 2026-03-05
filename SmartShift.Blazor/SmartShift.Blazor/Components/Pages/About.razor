@@ -1,0 +1,62 @@
+@page "/about"
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>About - TimeKeeper</PageTitle>
+
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>About TimeKeeper</h1>
+            <p class="lead text-muted">Learn more about our workforce management solution</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">What is TimeKeeper?</h5>
+                    <p class="card-text">
+                        TimeKeeper is a comprehensive workforce management solution designed to streamline scheduling,
+                        time tracking, and employee skill management. Our platform helps organizations optimize their
+                        workforce while providing employees with intuitive tools to manage their schedules and professional development.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Key Features</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Schedule Management</strong> - View and manage your work schedule with ease</li>
+                        <li class="list-group-item"><strong>Skills & Certifications</strong> - Track your professional credentials and certifications</li>
+                        <li class="list-group-item"><strong>Workforce Analytics</strong> - Advanced dashboards for supervisors and administrators</li>
+                        <li class="list-group-item"><strong>Account Management</strong> - Secure account settings and profile management</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Getting Started</h5>
+                    <p class="card-text">
+                        To get started with TimeKeeper, please log in to your account. If you don't have an account yet,
+                        you can register for one to begin managing your schedule and professional development.
+                    </p>
+                    <p>
+                        <AuthorizeView>
+                            <NotAuthorized>
+                                <a href="Account/Login" class="btn btn-primary">Log In</a>
+                                <a href="Account/Register" class="btn btn-secondary">Register</a>
+                            </NotAuthorized>
+                            <Authorized>
+                                <a href="schedule" class="btn btn-primary">Go to My Schedule</a>
+                                <a href="skills" class="btn btn-secondary">View My Skills</a>
+                            </Authorized>
+                        </AuthorizeView>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
