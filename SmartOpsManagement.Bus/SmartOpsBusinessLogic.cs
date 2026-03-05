@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SmartOpsManagement.Bus
 {
-    public partial class TimeKeeperBusinessLogic
+    public partial class SmartOpsBusinessLogic
     {
 
     }

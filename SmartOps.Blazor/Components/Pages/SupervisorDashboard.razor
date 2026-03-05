@@ -61,7 +61,7 @@
             <label class="form-label">Week</label>
             <div class="input-group">
                 <button class="btn btn-outline-secondary" @onclick="PreviousWeek">←</button>
-                <input type="date" class="form-control" @onchange="OnWeekChanged" />
+                <input type="date" class="form-control" value="@weekStart.ToString("yyyy-MM-dd")" @onchange="OnWeekChanged" />
                 <button class="btn btn-outline-secondary" @onclick="NextWeek">→</button>
             </div>
         </div>
@@ -77,7 +77,7 @@
             <div class="card border-primary">
                 <div class="card-body">
                     <h6 class="card-title text-muted">Required FTE</h6>
-                    <h3>@totalRequired.ToString("F1")</h3>
+                    <h3>@fteMetrics.Required.ToString("F1")</h3>
                     <small class="text-muted">this week</small>
                 </div>
             </div>
@@ -86,7 +86,7 @@
             <div class="card border-success">
                 <div class="card-body">
                     <h6 class="card-title text-muted">Scheduled FTE</h6>
-                    <h3>@totalScheduled.ToString("F1")</h3>
+                    <h3>@fteMetrics.Scheduled.ToString("F1")</h3>
                     <small class="text-muted">this week</small>
                 </div>
             </div>
@@ -95,7 +95,7 @@
             <div class="card border-warning">
                 <div class="card-body">
                     <h6 class="card-title text-muted">FTE Gap</h6>
-                    <h3 class="text-warning">@totalGap.ToString("F1")</h3>
+                    <h3 class="text-warning">@fteMetrics.Gap.ToString("F1")</h3>
                     <small class="text-muted">FTE short</small>
                 </div>
             </div>
@@ -104,7 +104,7 @@
             <div class="card">
                 <div class="card-body">
                     <h6 class="card-title text-muted">Efficiency</h6>
-                    <h3>@(totalRequired > 0 ? (totalScheduled / totalRequired * 100).ToString("F0") : 0)%</h3>
+                    <h3>@fteMetrics.EfficiencyPercent.ToString("F0")%</h3>
                     <small class="text-muted">coverage</small>
                 </div>
             </div>

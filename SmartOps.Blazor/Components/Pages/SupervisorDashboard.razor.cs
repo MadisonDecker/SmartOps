@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using SmartOps.Blazor.Services;
 using SmartOps.Models;
 using SmartOps.Models.Extensions;
 
@@ -14,9 +15,7 @@ public partial class SupervisorDashboard
     private List<Workgroup> workgroups = [];
     private List<Client> clients = [];
 
-    private decimal totalRequired;
-    private decimal totalScheduled;
-    private decimal totalGap;
+    private WeeklyFTEMetrics fteMetrics = new();
     private string? currentUserId;
 
     protected override async Task OnInitializedAsync()
@@ -69,10 +68,12 @@ public partial class SupervisorDashboard
             clients.Clear();
         }
 
-        // TODO: Call services to get FTE metrics
-        totalRequired = 0m;
-        totalScheduled = 0m;
-        totalGap = 0m;
+        // Get FTE metrics from the service
+        var workgroupIds = selectedWorkgroups.Select(w => w.Id);
+        fteMetrics = await FTEMetricsService.GetWeeklyMetricsAsync(
+            weekStart,
+            workgroupIds.Any() ? workgroupIds : null,
+            selectedClient?.Id);
 
         StateHasChanged();
     }
@@ -157,4 +158,7 @@ public partial class SupervisorDashboard
 
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+    [Inject]
+    private IFTEMetricsService FTEMetricsService { get; set; } = null!;
 }
