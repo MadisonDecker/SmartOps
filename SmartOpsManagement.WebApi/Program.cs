@@ -20,7 +20,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map minimal API endpoints
-app.MapWeeklyFTEMetricsEndpoints();
+app.MapWeeklyStaffingMetricsEndpoints();
 
 // Add this line to map OpenAPI endpoints
 if (app.Environment.IsDevelopment())

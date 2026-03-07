@@ -5,21 +5,21 @@ using SmartOps.Models;
 namespace SmartOps.Blazor.Services;
 
 /// <summary>
-/// Service for retrieving FTE metrics from the SmartOps Management Web API.
+/// Service for retrieving staffing metrics from the SmartOps Management Web API.
 /// </summary>
-public class FTEMetricsService : IFTEMetricsService
+public class StaffingMetricsService : IStaffingMetricsService
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<FTEMetricsService> _logger;
+    private readonly ILogger<StaffingMetricsService> _logger;
 
-    public FTEMetricsService(HttpClient httpClient, ILogger<FTEMetricsService> logger)
+    public StaffingMetricsService(HttpClient httpClient, ILogger<StaffingMetricsService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public async Task<WeeklyFTEMetrics> GetWeeklyMetricsAsync(
+    public async Task<WeeklyStaffingMetrics> GetWeeklyMetricsAsync(
         DateTime weekStart,
         IEnumerable<int>? workgroupIds = null,
         int? clientId = null)
@@ -42,18 +42,18 @@ public class FTEMetricsService : IFTEMetricsService
                 queryParams["clientId"] = clientId.Value.ToString();
             }
 
-            var url = $"api/fte-metrics/weekly?{queryParams}";
+            var url = $"api/staffing-metrics/weekly?{queryParams}";
             
-            var metrics = await _httpClient.GetFromJsonAsync<WeeklyFTEMetrics>(url);
+            var metrics = await _httpClient.GetFromJsonAsync<WeeklyStaffingMetrics>(url);
             
-            return metrics ?? new WeeklyFTEMetrics { WeekStart = weekStart };
+            return metrics ?? new WeeklyStaffingMetrics { WeekStart = weekStart };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching weekly FTE metrics for week starting {WeekStart}", weekStart);
+            _logger.LogError(ex, "Error fetching weekly staffing metrics for week starting {WeekStart}", weekStart);
             
             // Return empty metrics on error
-            return new WeeklyFTEMetrics { WeekStart = weekStart };
+            return new WeeklyStaffingMetrics { WeekStart = weekStart };
         }
     }
 }

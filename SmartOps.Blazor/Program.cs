@@ -101,8 +101,8 @@ builder.Services.AddScoped<IClaimsTransformation, SmartOpsClaimsTransformation>(
 
 builder.Services.AddHttpContextAccessor();
 
-// Register FTE Metrics service with HttpClient for Web API calls
-builder.Services.AddHttpClient<IFTEMetricsService, FTEMetricsService>(client =>
+// Register Staffing Metrics service with HttpClient for Web API calls
+builder.Services.AddHttpClient<IStaffingMetricsService, StaffingMetricsService>(client =>
 {
     var apiBaseUrl = builder.Configuration["SmartOpsApi:BaseUrl"] ?? "https://localhost:7249/";
     client.BaseAddress = new Uri(apiBaseUrl);

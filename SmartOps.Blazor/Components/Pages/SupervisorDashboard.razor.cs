@@ -15,7 +15,7 @@ public partial class SupervisorDashboard
     private List<Workgroup> workgroups = [];
     private List<Client> clients = [];
 
-    private WeeklyFTEMetrics fteMetrics = new();
+    private WeeklyStaffingMetrics staffingMetrics = new();
     private string? currentUserId;
 
     protected override async Task OnInitializedAsync()
@@ -68,9 +68,9 @@ public partial class SupervisorDashboard
             clients.Clear();
         }
 
-        // Get FTE metrics from the service
+        // Get staffing metrics from the service
         var workgroupIds = selectedWorkgroups.Select(w => w.Id);
-        fteMetrics = await FTEMetricsService.GetWeeklyMetricsAsync(
+        staffingMetrics = await StaffingMetricsService.GetWeeklyMetricsAsync(
             weekStart,
             workgroupIds.Any() ? workgroupIds : null,
             selectedClient?.Id);
@@ -160,5 +160,5 @@ public partial class SupervisorDashboard
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
     [Inject]
-    private IFTEMetricsService FTEMetricsService { get; set; } = null!;
+    private IStaffingMetricsService StaffingMetricsService { get; set; } = null!;
 }

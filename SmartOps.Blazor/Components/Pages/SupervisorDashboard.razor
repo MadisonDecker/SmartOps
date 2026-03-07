@@ -76,8 +76,8 @@
         <div class="col-md-3">
             <div class="card border-primary">
                 <div class="card-body">
-                    <h6 class="card-title text-muted">Required FTE</h6>
-                    <h3>@fteMetrics.Required.ToString("F1")</h3>
+                    <h6 class="card-title text-muted">Required Staffing</h6>
+                    <h3>@staffingMetrics.Required.ToString("F1")</h3>
                     <small class="text-muted">this week</small>
                 </div>
             </div>
@@ -85,8 +85,8 @@
         <div class="col-md-3">
             <div class="card border-success">
                 <div class="card-body">
-                    <h6 class="card-title text-muted">Scheduled FTE</h6>
-                    <h3>@fteMetrics.Scheduled.ToString("F1")</h3>
+                    <h6 class="card-title text-muted">Scheduled Staffing</h6>
+                    <h3>@staffingMetrics.Scheduled.ToString("F1")</h3>
                     <small class="text-muted">this week</small>
                 </div>
             </div>
@@ -94,9 +94,9 @@
         <div class="col-md-3">
             <div class="card border-warning">
                 <div class="card-body">
-                    <h6 class="card-title text-muted">FTE Gap</h6>
-                    <h3 class="text-warning">@fteMetrics.Gap.ToString("F1")</h3>
-                    <small class="text-muted">FTE short</small>
+                    <h6 class="card-title text-muted">Staffing Gap</h6>
+                    <h3 class="text-warning">@staffingMetrics.Gap.ToString("F1")</h3>
+                    <small class="text-muted">Staffing short</small>
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@
             <div class="card">
                 <div class="card-body">
                     <h6 class="card-title text-muted">Efficiency</h6>
-                    <h3>@fteMetrics.EfficiencyPercent.ToString("F0")%</h3>
+                    <h3>@staffingMetrics.EfficiencyPercent.ToString("F0")%</h3>
                     <small class="text-muted">coverage</small>
                 </div>
             </div>
