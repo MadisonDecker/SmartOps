@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Etime.Bus\Etime.Bus.csproj" />
     <ProjectReference Include="..\SmartManagement.Repo\SmartManagement.Repo.csproj" />
     <ProjectReference Include="..\SmartOpsManagement.Bus\SmartOpsManagement.Bus.csproj" />
   </ItemGroup>

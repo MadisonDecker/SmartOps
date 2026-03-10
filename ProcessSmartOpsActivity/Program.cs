@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Etime.Bus;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SmartManagement.Repo.Models;
 using SmartOpsManagement.Bus;
@@ -17,6 +18,25 @@ using var context = new SmartOpsContext(optionsBuilder.Options);
 var businessLogic = new SmartOpsBusinessLogic(context);
 
 Console.WriteLine("SmartOps Activity Processing started.");
+
+// Pull schedule data for this week
+var today = DateTime.Today;
+var startOfWeek = today.AddDays(-(int)today.DayOfWeek); // Sunday
+var endOfWeek = startOfWeek.AddDays(7); // Next Sunday
+
+Console.WriteLine($"Fetching schedules from {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}...");
+var schedules = EtimeBusinessLogic.GetSchedules(startOfWeek, endOfWeek);
+Console.WriteLine($"Retrieved {schedules.Count} schedule records.");
+
+foreach (var schedule in schedules.Take(10)) // Show first 10 for preview
+{
+    Console.WriteLine($"  {schedule.PersonNum} | {schedule.PayGroup} | {schedule.StartDtm:g} - {schedule.EndDtm:g} | Break: {schedule.BreakMin} min");
+}
+
+if (schedules.Count > 10)
+{
+    Console.WriteLine($"  ... and {schedules.Count - 10} more records.");
+}
 
 // Example: Process LAT Details
 await ProcessLatDetailsAsync(businessLogic);
