@@ -67,7 +67,7 @@ static void ExportEtimeSchedules()
     var endOfWeek = startOfWeek.AddDays(7); // Next Sunday
 
     //Get and Export schedules to json file.
-    if (!EtimeBusinessLogic.GetAndExportSchedules(startOfWeek, endOfWeek, "EtimeSchedules.json"))
+    if (!EtimeBusinessLogic.GetAndExportSchedules(startOfWeek, endOfWeek, "C:\\Code\\EtimeSchedules.json"))
     {
         Console.WriteLine("Failed to export Etime schedules.");
     }
