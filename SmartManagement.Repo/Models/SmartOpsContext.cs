@@ -13,10 +13,20 @@ public partial class SmartOpsContext : DbContext
     {
     }
 
+    public virtual DbSet<EtimeShift> EtimeShifts { get; set; }
+
     public virtual DbSet<Latdetail> Latdetails { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<EtimeShift>(entity =>
+        {
+            entity.Property(e => e.PayGroup).HasMaxLength(50);
+            entity.Property(e => e.PersonNum).HasMaxLength(15);
+            entity.Property(e => e.ShiftEnd).HasColumnType("datetime");
+            entity.Property(e => e.ShiftStart).HasColumnType("datetime");
+        });
+
         modelBuilder.Entity<Latdetail>(entity =>
         {
             entity.ToTable("LATDetails");
