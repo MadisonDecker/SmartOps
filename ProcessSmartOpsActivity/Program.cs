@@ -19,24 +19,7 @@ var businessLogic = new SmartOpsBusinessLogic(context);
 
 Console.WriteLine("SmartOps Activity Processing started.");
 
-// Pull schedule data for this week
-var today = DateTime.Today;
-var startOfWeek = today.AddDays(-(int)today.DayOfWeek); // Sunday
-var endOfWeek = startOfWeek.AddDays(7); // Next Sunday
-
-Console.WriteLine($"Fetching schedules from {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}...");
-var schedules = EtimeBusinessLogic.GetSchedules(startOfWeek, endOfWeek);
-Console.WriteLine($"Retrieved {schedules.Count} schedule records.");
-
-foreach (var schedule in schedules.Take(10)) // Show first 10 for preview
-{
-    Console.WriteLine($"  {schedule.PersonNum} | {schedule.PayGroup} | {schedule.StartDtm:g} - {schedule.EndDtm:g} | Break: {schedule.BreakMin} min");
-}
-
-if (schedules.Count > 10)
-{
-    Console.WriteLine($"  ... and {schedules.Count - 10} more records.");
-}
+ExportEtimeSchedules();
 
 // Example: Process LAT Details
 await ProcessLatDetailsAsync(businessLogic);
@@ -76,3 +59,17 @@ static async Task ProcessLatDetailsAsync(SmartOpsBusinessLogic businessLogic)
     // Console.WriteLine($"Saved LAT detail with ID: {savedDetail?.LatdetailId}");
 }
 
+static void ExportEtimeSchedules()
+{
+    // Pull schedule data for this week
+    var today = DateTime.Today;
+    var startOfWeek = today.AddDays(-(int)today.DayOfWeek); // Sunday
+    var endOfWeek = startOfWeek.AddDays(7); // Next Sunday
+
+    //Get and Export schedules to json file.
+    if (!EtimeBusinessLogic.GetAndExportSchedules(startOfWeek, endOfWeek, "EtimeSchedules.json"))
+    {
+        Console.WriteLine("Failed to export Etime schedules.");
+    }
+
+}
