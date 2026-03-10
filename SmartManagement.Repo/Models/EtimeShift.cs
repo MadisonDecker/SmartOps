@@ -11,6 +11,8 @@ public partial class EtimeShift
 
     public int ShiftCodeId { get; set; }
 
+    public string AdloginName { get; set; }
+
     public string PersonNum { get; set; }
 
     public string PayGroup { get; set; }

@@ -21,6 +21,10 @@ public partial class SmartOpsContext : DbContext
     {
         modelBuilder.Entity<EtimeShift>(entity =>
         {
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnName("ADLoginName");
             entity.Property(e => e.PayGroup).HasMaxLength(50);
             entity.Property(e => e.PersonNum).HasMaxLength(15);
             entity.Property(e => e.ShiftEnd).HasColumnType("datetime");

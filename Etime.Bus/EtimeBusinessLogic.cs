@@ -5,6 +5,7 @@ namespace Etime.Bus;
 public class ScheduleRecord
 {
     public int ShiftCodeId { get; set; }
+    public string NtLoginName { get; set; } = string.Empty;
     public string PersonNum { get; set; } = string.Empty;
     public string? PayGroup { get; set; }
     public int? PayCodeId { get; set; }
@@ -51,6 +52,7 @@ public class EtimeBusinessLogic
             results.Add(new ScheduleRecord
             {
                 ShiftCodeId = reader.GetInt32(reader.GetOrdinal("SHIFTCODEID")),
+                NtLoginName = reader.IsDBNull(reader.GetOrdinal("NT_Login_name")) ? string.Empty : reader.GetString(reader.GetOrdinal("NT_Login_name")),
                 PersonNum = reader.GetString(reader.GetOrdinal("PERSONNUM")),
                 PayGroup = reader.IsDBNull(reader.GetOrdinal("PayGroup")) ? null : reader.GetString(reader.GetOrdinal("PayGroup")),
                 PayCodeId = reader.IsDBNull(reader.GetOrdinal("PAYCODEID")) ? null : reader.GetInt32(reader.GetOrdinal("PAYCODEID")),
