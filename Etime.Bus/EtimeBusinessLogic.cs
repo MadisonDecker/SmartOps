@@ -23,7 +23,7 @@ public class EtimeBusinessLogic
         try
         {
             var schedules = GetSchedules(shiftStartDate, shiftEndDate);
-            ExportSchedulesToCsv(schedules, exportFilePath);
+            ExportSchedulesToJson(schedules, exportFilePath);
             return true;
         }
         catch (Exception ex)
@@ -73,5 +73,11 @@ public class EtimeBusinessLogic
             var line = $"{schedule.ShiftCodeId},{schedule.PersonNum},{schedule.PayGroup},{schedule.PayCodeId},{schedule.PayCode},{schedule.StartDtm:O},{schedule.EndDtm:O},{schedule.BreakMin}";
             writer.WriteLine(line);
         }
+    }
+
+    public static void ExportSchedulesToJson(List<ScheduleRecord> schedules, string filePath)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(schedules, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(filePath, json);
     }
 }
