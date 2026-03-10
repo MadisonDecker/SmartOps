@@ -16,7 +16,7 @@ public class ScheduleRecord
 
 public class EtimeBusinessLogic
 {
-    private const string ConnectionString = "Server=SvrSqlPitAdp;Database=adpeet;Trusted_Connection=True;TrustServerCertificate=True;";
+    private const string ConnectionString = "Server=SvrPitSqlAdp;Database=SSO;Trusted_Connection=True;TrustServerCertificate=True;";
 
     public static List<ScheduleRecord> GetSchedules(DateTime shiftStartDate, DateTime shiftEndDate)
     {
