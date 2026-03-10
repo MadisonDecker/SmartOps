@@ -1,18 +1,21 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="DOCS INFOCISION.xlsx" />
     <File Path="Readme.md" />
+    <File Path="RET Lock - March 26 + April 26.xlsx" />
     <File Path="SampleSchedule.json" />
     <File Path="SOLUTION_PROMPT.md" />
     <File Path="WorkForce Software REST API Guide.pdf" />
   </Folder>
+  <Project Path="Etime.Bus/Etime.Bus.csproj" Id="1aa1f198-710f-4011-b0a4-779195e82a5c" />
   <Project Path="ProcessSmartOpsActivity/ProcessSmartOpsActivity.csproj" Id="2f9128c7-aaaf-4b2b-b1b4-47ee94043dfb" />
+  <Project Path="SmartManagement.Repo/SmartManagement.Repo.csproj" Id="ee00abf0-87b7-4fb0-9f51-67caed196ac2" />
   <Project Path="SmartOps.Blazor/SmartOps.Blazor.csproj" />
   <Project Path="SmartOps.Models/SmartOps.Models.csproj" />
+  <Project Path="SmartOpsManagement.Bus/SmartOpsManagement.Bus.csproj" />
+  <Project Path="SmartOpsManagement.WebApi/SmartOpsManagement.WebApi.csproj" Id="c803d230-68c6-433b-916f-21e45c660828" />
   <Project Path="SmartShift.Blazor/SmartShift.Blazor.Client/SmartShift.Blazor.Client.csproj" Id="64f2dc89-441a-431e-8e0d-a5d1d6b43606" />
   <Project Path="SmartShift.Blazor/SmartShift.Blazor/SmartShift.Blazor.csproj" Id="26fd9ce0-19aa-4ce0-8234-66882ac2242a" />
-  <Project Path="SmartOpsManagement.Bus/SmartOpsManagement.Bus.csproj" />
-  <Project Path="SmartManagement.Repo/SmartManagement.Repo.csproj" Id="ee00abf0-87b7-4fb0-9f51-67caed196ac2" />
-  <Project Path="SmartOpsManagement.WebApi/SmartOpsManagement.WebApi.csproj" Id="c803d230-68c6-433b-916f-21e45c660828" />
   <Project Path="Workforce.Bus/Workforce.Bus.csproj" />
 </Solution>
 

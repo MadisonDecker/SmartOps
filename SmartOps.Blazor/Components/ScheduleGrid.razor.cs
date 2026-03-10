@@ -38,15 +38,15 @@ public partial class ScheduleGrid
     }
 
     /// <summary>
-    /// Gets the required FTE (Full Time Equivalent) for a given date/time slot.
+    /// Gets the required staffing for a given date/time slot.
     /// FTE represents the fraction of a full-time person needed for the interval.
     /// 1.0 FTE = one person working the full interval.
     /// </summary>
-    private decimal GetRequiredFTE(DateTime dateTime)
+    private decimal GetRequiredStaffing(DateTime dateTime)
     {
-        // DEVNOTE: Development stub data - generates FTE requirements based on hour with randomness
-        // Production: Call IStaffingRequirementService to get required FTE for SelectedWorkgroups
-        // FTE Curve: 7-8am: 0.5 → 9am: 2.5 → 2pm: 15.0 (peak) → 8pm: 2.5 → 9pm+: 0.5
+        // DEVNOTE: Development stub data - generates staffing requirements based on hour with randomness
+        // Production: Call IStaffingRequirementService to get required staffing for SelectedWorkgroups
+        // Staffing Curve: 7-8am: 0.5 → 9am: 2.5 → 2pm: 15.0 (peak) → 8pm: 2.5 → 9pm+: 0.5
 
         int hour = dateTime.Hour;
         decimal baseFTE = 0m;
@@ -85,7 +85,7 @@ public partial class ScheduleGrid
     /// Gets the assigned FTE (Full Time Equivalent) for a given date/time slot.
     /// FTE represents the fraction of a full-time person assigned for the interval.
     /// </summary>
-    private decimal GetAssignedFTE(DateTime dateTime)
+    private decimal GetAssignedStaffing(DateTime dateTime)
     {
         // DEVNOTE: Development stub data - generates assigned FTE based on required with variance
         // Production: Call IScheduleService to get assigned FTE count for SelectedWorkgroups

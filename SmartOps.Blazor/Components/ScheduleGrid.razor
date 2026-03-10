@@ -39,10 +39,10 @@
                                 var dateTime = date.Add(timeSlot);
                                 <td class="p-2 schedule-cell" style="min-height: 60px; vertical-align: top; position: relative;">
                                     <div class="schedule-slot" style="font-size: 0.85rem;">
-                                        <div class="fte-required badge bg-primary mb-1" title="Required FTE">R: @GetRequiredFTE(dateTime).ToString("F2")</div>
-                                        <div class="fte-assigned badge bg-success" title="Assigned FTE">A: @GetAssignedFTE(dateTime).ToString("F2")</div>
+                                        <div class="fte-required badge bg-primary mb-1" title="Required Staffing">R: @GetRequiredStaffing(dateTime).ToString("F2")</div>
+                                        <div class="fte-assigned badge bg-success" title="Assigned Staffing">A: @GetAssignedStaffing(dateTime).ToString("F2")</div>
                                         @{
-                                            var gap = GetRequiredFTE(dateTime) - GetAssignedFTE(dateTime);
+                                            var gap = GetRequiredStaffing(dateTime) - GetAssignedStaffing(dateTime);
                                             if (gap > 0.01m)
                                             {
                                                 <div class="gap-indicator badge bg-danger" title="FTE Gap">Gap: @gap.ToString("F2")</div>
@@ -63,8 +63,8 @@
 
         <div class="mt-3">
             <h6>Legend:</h6>
-            <span class="badge bg-primary me-2">R = Required FTE</span>
-            <span class="badge bg-success me-2">A = Assigned FTE</span>
+            <span class="badge bg-primary me-2">R = Required Staffing</span>
+            <span class="badge bg-success me-2">A = Assigned Staffing</span>
             <span class="badge bg-danger me-2">Red = Under-staffed</span>
             <span class="badge bg-warning me-2">Yellow = Over-staffed</span>
             <span class="text-muted small ms-3">FTE = Full Time Equivalent (1.0 = one person for the full interval)</span>

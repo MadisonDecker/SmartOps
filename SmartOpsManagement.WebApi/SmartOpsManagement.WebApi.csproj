@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.13.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SmartManagement.Repo\SmartManagement.Repo.csproj" />
     <ProjectReference Include="..\SmartOps.Models\SmartOps.Models.csproj" />
     <ProjectReference Include="..\SmartOpsManagement.Bus\SmartOpsManagement.Bus.csproj" />
   </ItemGroup>

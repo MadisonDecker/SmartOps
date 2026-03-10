@@ -23,7 +23,7 @@
                         @((MarkupString)$"<text x=\"{chartPadding - 10}\" y=\"{y + 4}\" text-anchor=\"end\" fill=\"#6b7280\" font-size=\"11\">{labelValue:F1}</text>")
                     }
 
-                <!-- Required FTE line with gradient fill -->
+                <!-- Required Staffing line with gradient fill -->
                 <defs>
                     <linearGradient id="requiredGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
@@ -40,17 +40,17 @@
                 <!-- Area fill for assigned -->
                 <path d="@GetAreaPath(false)" fill="url(#assignedGradient)" />
 
-                <!-- Required FTE line -->
+                <!-- Required Staffing line -->
                 <polyline points="@GetLinePath(true)" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
-                <!-- Assigned FTE line -->
+                <!-- Assigned Staffing line -->
                 <polyline points="@GetLinePath(false)" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
                 <!-- Data points for required -->
                 @foreach (var point in GetDataPoints(true))
                 {
                     <circle cx="@point.X" cy="@point.Y" r="@GetDataPointRadius()" fill="#4f46e5" stroke="#fff" stroke-width="2" class="data-point">
-                        <title>Required FTE: @point.Value.ToString("F2")</title>
+                        <title>Required Staffing: @point.Value.ToString("F2")</title>
                     </circle>
                 }
 
@@ -58,7 +58,7 @@
                 @foreach (var point in GetDataPoints(false))
                 {
                     <circle cx="@point.X" cy="@point.Y" r="@GetDataPointRadius()" fill="#059669" stroke="#fff" stroke-width="2" class="data-point">
-                        <title>Assigned FTE: @point.Value.ToString("F2")</title>
+                        <title>Assigned Staffing: @point.Value.ToString("F2")</title>
                     </circle>
                 }
 
@@ -75,8 +75,8 @@
         </div>
 
         <div class="mt-3 d-flex justify-content-center gap-4">
-            <div><span class="legend-line legend-required"></span> Required FTE</div>
-            <div><span class="legend-line legend-assigned"></span> Assigned FTE</div>
+            <div><span class="legend-line legend-required"></span> Required Staffing</div>
+            <div><span class="legend-line legend-assigned"></span> Assigned Staffing</div>
             <div class="text-muted small">(FTE = Full Time Equivalent, @GetIntervalDescription())</div>
         </div>
     </div>
