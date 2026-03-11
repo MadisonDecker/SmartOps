@@ -7,8 +7,9 @@ public class ScheduleRecord
     public int ShiftCodeId { get; set; }
     public string NtLoginName { get; set; } = string.Empty;
     public string PersonNum { get; set; } = string.Empty;
-    public string? EmplId { get; set; }
-    public string? FileNumber { get; set; }
+    public int? EmplId { get; set; }
+    public int? FileNumber { get; set; }
+
     public string? PayGroup { get; set; }
     public int? PayCodeId { get; set; }
     public string? PayCode { get; set; }
