@@ -56,6 +56,8 @@ static async Task ExportAndImportEtimeSchedules(SmartOpsBusinessLogic businessLo
     {
         Console.WriteLine($"Successfully imported {importedCount} Etime shifts to the database.");
     }
+
+    
 }
 
 /// <summary>

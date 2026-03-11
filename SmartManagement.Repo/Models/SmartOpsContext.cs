@@ -17,6 +17,12 @@ public partial class SmartOpsContext : DbContext
 
     public virtual DbSet<Latdetail> Latdetails { get; set; }
 
+    public virtual DbSet<Schedule> Schedules { get; set; }
+
+    public virtual DbSet<Shift> Shifts { get; set; }
+
+    public virtual DbSet<ShiftBreak> ShiftBreaks { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EtimeShift>(entity =>
@@ -25,8 +31,8 @@ public partial class SmartOpsContext : DbContext
                 .IsRequired()
                 .HasMaxLength(200)
                 .HasColumnName("ADLoginName");
+            entity.Property(e => e.PayCode).HasMaxLength(50);
             entity.Property(e => e.PayGroup).HasMaxLength(50);
-            entity.Property(e => e.PersonNum).HasMaxLength(15);
             entity.Property(e => e.ShiftEnd).HasColumnType("datetime");
             entity.Property(e => e.ShiftStart).HasColumnType("datetime");
         });
@@ -47,6 +53,66 @@ public partial class SmartOpsContext : DbContext
                 .IsConcurrencyToken();
             entity.Property(e => e.LastUpdatedDate).HasColumnType("datetime");
             entity.Property(e => e.WorkGroup).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Schedule>(entity =>
+        {
+            entity.Property(e => e.Adlogin)
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnName("ADLogin");
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.ExternalMatchId)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.InsertedDateUtc).HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc).HasColumnType("datetime");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+            entity.Property(e => e.PayGroup)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.Timestamp)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+        });
+
+        modelBuilder.Entity<Shift>(entity =>
+        {
+            entity.Property(e => e.EndTime).HasColumnType("datetime");
+            entity.Property(e => e.InsertedDateUtc).HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc).HasColumnType("datetime");
+            entity.Property(e => e.Lasttimestamp)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+            entity.Property(e => e.PayCode).HasMaxLength(50);
+            entity.Property(e => e.StartTime).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Schedule).WithMany(p => p.Shifts)
+                .HasForeignKey(d => d.ScheduleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Shifts_Schedules");
+        });
+
+        modelBuilder.Entity<ShiftBreak>(entity =>
+        {
+            entity.Property(e => e.EndTime).HasColumnType("datetime");
+            entity.Property(e => e.InsertedDateUtc).HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc).HasColumnType("datetime");
+            entity.Property(e => e.Lasttimestamp)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+            entity.Property(e => e.StartTime).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Schedule).WithMany(p => p.ShiftBreaks)
+                .HasForeignKey(d => d.ScheduleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ShiftBreaks_Schedules");
         });
 
         OnModelCreatingPartial(modelBuilder);

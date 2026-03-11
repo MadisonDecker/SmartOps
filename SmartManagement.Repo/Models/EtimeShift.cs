@@ -13,13 +13,17 @@ public partial class EtimeShift
 
     public string AdloginName { get; set; }
 
-    public string PersonNum { get; set; }
+    public int PersonNum { get; set; }
+
+    public int EmplId { get; set; }
+
+    public int FileNumber { get; set; }
 
     public string PayGroup { get; set; }
 
     public int? PayCodeId { get; set; }
 
-    public int? PayCode { get; set; }
+    public string PayCode { get; set; }
 
     public DateTime ShiftStart { get; set; }
 

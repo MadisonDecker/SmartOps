@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.ComponentModel;
+using System.Text.Json;
 using SmartManagement.Repo.Models;
 
 namespace SmartOpsManagement.Bus;
@@ -38,9 +39,11 @@ public partial class SmartOpsBusinessLogic
                 ShiftCodeId = s.ShiftCodeId,
                 AdloginName = s.NtLoginName,
                 PersonNum = s.PersonNum,
+                EmplId = s.EmplId != null && int.TryParse(s.EmplId.ToString(), out var emp) ? emp : 0,
+                FileNumber = s.FileNumber != null && int.TryParse(s.FileNumber.ToString(), out var fl) ? fl : 0,
                 PayGroup = s.PayGroup ?? string.Empty,
                 PayCodeId = s.PayCodeId,
-                PayCode = s.PayCode != null && int.TryParse(s.PayCode, out var pc) ? pc : null,
+                PayCode = s.PayCode != null && int.TryParse(s.PayCode, out var pc) ? pc.ToString() : null,
                 ShiftStart = s.StartDtm,
                 ShiftEnd = s.EndDtm,
                 BreakMin = s.BreakMin
@@ -54,6 +57,90 @@ public partial class SmartOpsBusinessLogic
             Console.WriteLine($"Error importing schedules: {ex.Message}");
             return -1;
         }
+    }
+
+    /// <summary>
+    /// Convert Etime shifts to new schedule format.
+    /// Groups EtimeShifts by ADLoginName and ShiftCodeId to create Schedule records,
+    /// then creates Shift records from ShiftStart/ShiftEnd times.
+    /// </summary>
+    public async Task<bool> ConvertEtimeToShift(DateTime startDate, DateTime endDate)
+    {
+        var etimeShifts = await GetEtimeShiftsByDateRangeAsync(startDate, endDate);
+
+        if (etimeShifts.Count == 0)
+        {
+            Console.WriteLine("No Etime shifts found for the specified date range.");
+            return false;
+        }
+
+        var now = DateTime.UtcNow;
+
+        // Group by ADLoginName and ShiftCodeId to create Schedule records
+        var scheduleGroups = etimeShifts
+            .GroupBy(e => new { e.AdloginName, e.ShiftCodeId })
+            .ToList();
+
+        foreach (var group in scheduleGroups)
+        {
+            var firstShift = group.First();
+            var minStart = group.Min(e => e.ShiftStart);
+            var maxEnd = group.Max(e => e.ShiftEnd);
+
+            // Create the Schedule record
+            var schedule = new Schedule
+            {
+                Name = $"{group.Key.AdloginName}-{group.Key.ShiftCodeId}",
+                Adlogin = group.Key.AdloginName,
+                ExternalMatchId = firstShift.FileNumber.ToString().PadLeft(8, '0'),
+                PayGroup = firstShift.PayGroup ?? string.Empty,
+                StartDate = minStart,
+                EndDate = maxEnd,
+                IsOngoing = false,
+                EffectiveDate = DateOnly.FromDateTime(minStart),
+                InsertedDateUtc = now,
+                LastUpdatedUtc = now
+            };
+
+            _context.Schedules.Add(schedule);
+
+            // Create Shift records for each EtimeShift in the group
+            foreach (var etimeShift in group)
+            {
+                var shift = new Shift
+                {
+                    Schedule = schedule,
+                    PayCode = etimeShift.PayCode ?? string.Empty,
+                    StartTime = etimeShift.ShiftStart,
+                    EndTime = etimeShift.ShiftEnd,
+                    InsertedDateUtc = now,
+                    LastUpdatedUtc = now
+                };
+
+                _context.Shifts.Add(shift);
+
+                // Create ShiftBreak if there are break minutes
+                if (etimeShift.BreakMin > 0)
+                {
+                    // Calculate break time - default to middle of shift
+                    var breakStart = etimeShift.ShiftStart.AddHours(4);
+                    var shiftBreak = new ShiftBreak
+                    {
+                        Schedule = schedule,
+                        StartTime = breakStart,
+                        EndTime = breakStart.AddMinutes(etimeShift.BreakMin),
+                        InsertedDateUtc = now,
+                        LastUpdatedUtc = now
+                    };
+
+                    _context.ShiftBreaks.Add(shiftBreak);
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        Console.WriteLine($"Created {scheduleGroups.Count} schedules with shifts from {etimeShifts.Count} Etime records.");
+        return true;
     }
 
     /// <summary>
@@ -82,7 +169,9 @@ public class ScheduleImportRecord
 {
     public int ShiftCodeId { get; set; }
     public string NtLoginName { get; set; } = string.Empty;
-    public string PersonNum { get; set; } = string.Empty;
+    public int PersonNum { get; set; } 
+    public int? EmplId { get; set; }
+    public int? FileNumber { get; set; }
     public string? PayGroup { get; set; }
     public int? PayCodeId { get; set; }
     public string? PayCode { get; set; }

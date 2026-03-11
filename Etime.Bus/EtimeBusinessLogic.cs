@@ -7,6 +7,8 @@ public class ScheduleRecord
     public int ShiftCodeId { get; set; }
     public string NtLoginName { get; set; } = string.Empty;
     public string PersonNum { get; set; } = string.Empty;
+    public string? EmplId { get; set; }
+    public string? FileNumber { get; set; }
     public string? PayGroup { get; set; }
     public int? PayCodeId { get; set; }
     public string? PayCode { get; set; }
@@ -54,6 +56,8 @@ public class EtimeBusinessLogic
                 ShiftCodeId = reader.GetInt32(reader.GetOrdinal("SHIFTCODEID")),
                 NtLoginName = reader.IsDBNull(reader.GetOrdinal("NT_Login_name")) ? string.Empty : reader.GetString(reader.GetOrdinal("NT_Login_name")),
                 PersonNum = reader.GetString(reader.GetOrdinal("PERSONNUM")),
+                EmplId = reader.IsDBNull(reader.GetOrdinal("EMPLID")) ? null : reader.GetString(reader.GetOrdinal("EMPLID")),
+                FileNumber = reader.IsDBNull(reader.GetOrdinal("FILE_NUMBER")) ? null : reader.GetString(reader.GetOrdinal("FILE_NUMBER")),
                 PayGroup = reader.IsDBNull(reader.GetOrdinal("PayGroup")) ? null : reader.GetString(reader.GetOrdinal("PayGroup")),
                 PayCodeId = reader.IsDBNull(reader.GetOrdinal("PAYCODEID")) ? null : reader.GetInt32(reader.GetOrdinal("PAYCODEID")),
                 PayCode = reader.IsDBNull(reader.GetOrdinal("PayCode")) ? null : reader.GetString(reader.GetOrdinal("PayCode")),

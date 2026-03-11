@@ -25,6 +25,18 @@
       {
          "Name": "[dbo].[LATDetails]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Schedules]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ShiftBreaks]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Shifts]",
+         "ObjectType": 0
       }
    ],
    "UiHint": null,
