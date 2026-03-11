@@ -57,7 +57,12 @@ static async Task ExportAndImportEtimeSchedules(SmartOpsBusinessLogic businessLo
         Console.WriteLine($"Successfully imported {importedCount} Etime shifts to the database.");
     }
 
-    
+    //Now convert Etime data to SmartOps Schedules and save to database (this is where the main business logic will be, for now we just imported EtimeShifts as a demonstration)
+    if (!await businessLogic.ConvertEtimeShiftsToSmartOpsSchedulesAsync(startOfWeek, endOfWeek))
+    {
+        Console.WriteLine("Failed to convert Etime shifts to SmartOps schedules.");
+    }
+
 }
 
 /// <summary>

@@ -64,7 +64,7 @@ public partial class SmartOpsBusinessLogic
     /// Groups EtimeShifts by ADLoginName and ShiftCodeId to create Schedule records,
     /// then creates Shift records from ShiftStart/ShiftEnd times.
     /// </summary>
-    public async Task<bool> ConvertEtimeToShift(DateTime startDate, DateTime endDate)
+    public async Task<bool> ConvertEtimeShiftsToSmartOpsSchedulesAsync(DateTime startDate, DateTime endDate)
     {
         var etimeShifts = await GetEtimeShiftsByDateRangeAsync(startDate, endDate);
 
