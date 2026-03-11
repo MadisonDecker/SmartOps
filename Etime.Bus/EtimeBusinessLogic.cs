@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Etime.Bus;
 
@@ -67,7 +68,7 @@ public class EtimeBusinessLogic
                 BreakMin = reader.GetInt32(reader.GetOrdinal("BreakMin"))
             });
         }
-
+       
         return results;
     }
 

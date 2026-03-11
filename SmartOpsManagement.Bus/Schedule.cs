@@ -1,6 +1,7 @@
-﻿using System.ComponentModel;
+﻿using SmartManagement.Repo.Models;
+using System.ComponentModel;
 using System.Text.Json;
-using SmartManagement.Repo.Models;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace SmartOpsManagement.Bus;
 
@@ -38,12 +39,12 @@ public partial class SmartOpsBusinessLogic
             {
                 ShiftCodeId = s.ShiftCodeId,
                 AdloginName = s.NtLoginName,
-                PersonNum = s.PersonNum,
+                PersonNum = int.TryParse(s.PersonNum, out var pn) ? pn : 0,
                 EmplId = s.EmplId != null && int.TryParse(s.EmplId.ToString(), out var emp) ? emp : 0,
                 FileNumber = s.FileNumber != null && int.TryParse(s.FileNumber.ToString(), out var fl) ? fl : 0,
                 PayGroup = s.PayGroup ?? string.Empty,
-                PayCodeId = s.PayCodeId,
-                PayCode = s.PayCode != null && int.TryParse(s.PayCode, out var pc) ? pc.ToString() : null,
+                PayCodeId = s.PayCodeId != null ? s.PayCodeId : null,
+                PayCode = string.IsNullOrWhiteSpace(s.PayCode) ? null : s.PayCode,
                 ShiftStart = s.StartDtm,
                 ShiftEnd = s.EndDtm,
                 BreakMin = s.BreakMin
@@ -76,9 +77,9 @@ public partial class SmartOpsBusinessLogic
 
         var now = DateTime.UtcNow;
 
-        // Group by ADLoginName and ShiftCodeId to create Schedule records
+        // Group by ADLoginName to create Schedule records
         var scheduleGroups = etimeShifts
-            .GroupBy(e => new { e.AdloginName, e.ShiftCodeId })
+            .GroupBy(e => e.AdloginName)
             .ToList();
 
         foreach (var group in scheduleGroups)
@@ -90,13 +91,13 @@ public partial class SmartOpsBusinessLogic
             // Create the Schedule record
             var schedule = new Schedule
             {
-                Name = $"{group.Key.AdloginName}-{group.Key.ShiftCodeId}",
-                Adlogin = group.Key.AdloginName,
+                Name = group.Key,
+                Adlogin = group.Key,
                 ExternalMatchId = firstShift.FileNumber.ToString().PadLeft(8, '0'),
                 PayGroup = firstShift.PayGroup ?? string.Empty,
                 StartDate = minStart,
                 EndDate = maxEnd,
-                IsOngoing = false,
+                IsOngoing = true,
                 EffectiveDate = DateOnly.FromDateTime(minStart),
                 InsertedDateUtc = now,
                 LastUpdatedUtc = now
@@ -169,7 +170,7 @@ public class ScheduleImportRecord
 {
     public int ShiftCodeId { get; set; }
     public string NtLoginName { get; set; } = string.Empty;
-    public int PersonNum { get; set; } 
+    public string PersonNum { get; set; } 
     public int? EmplId { get; set; }
     public int? FileNumber { get; set; }
     public string? PayGroup { get; set; }
