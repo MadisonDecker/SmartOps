@@ -161,6 +161,29 @@ public partial class SmartOpsBusinessLogic
             .Where(e => e.ShiftStart >= startDate && e.ShiftStart < endDate)
             .ToList());
     }
+
+    /// <summary>
+    /// Gets Etime shifts for a specific user (AD login) within a date range.
+    /// </summary>
+    public async Task<List<EtimeShift>> GetEtimeShiftsByUserAndDateRangeAsync(string adLoginName, DateTime startDate, DateTime endDate)
+    {
+        return await Task.FromResult(_context.EtimeShifts
+            .Where(e => e.AdloginName == adLoginName && e.ShiftStart >= startDate && e.ShiftStart < endDate)
+            .OrderBy(e => e.ShiftStart)
+            .ToList());
+    }
+
+    /// <summary>
+    /// Gets the next upcoming Etime shift for a specific user (AD login).
+    /// </summary>
+    public async Task<EtimeShift?> GetNextEtimeShiftForUserAsync(string adLoginName)
+    {
+        var now = DateTime.UtcNow;
+        return await Task.FromResult(_context.EtimeShifts
+            .Where(e => e.AdloginName == adLoginName && e.ShiftStart >= now)
+            .OrderBy(e => e.ShiftStart)
+            .FirstOrDefault());
+    }
 }
 
 /// <summary>
