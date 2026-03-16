@@ -12,7 +12,7 @@ public partial class Skills
     private string? currentUserId;
 
     [Inject]
-    private IStubDataService StubDataService { get; set; } = null!;
+    private IShiftDataService ShiftDataService { get; set; } = null!;
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = null!;
@@ -37,8 +37,8 @@ public partial class Skills
 
     private async Task LoadData()
     {
-        employee = await StubDataService.GetCurrentEmployeeAsync();
-        skills = await StubDataService.GetEmployeeSkillsAsync(currentUserId);
+        employee = await ShiftDataService.GetCurrentEmployeeAsync();
+        skills = await ShiftDataService.GetEmployeeSkillsAsync(currentUserId);
     }
 
     private static string GetProficiencyBadgeClass(string? proficiency) => proficiency?.ToLower() switch

@@ -1,4 +1,4 @@
-# TimeKeeper UI Stub Data Setup
+# Smart Shift UI Stub Data Setup
 
 ## Overview
 I've created a comprehensive stub data service that provides realistic sample data for UI development and testing. This allows you to work on the UI without needing a real backend database.
@@ -6,7 +6,7 @@ I've created a comprehensive stub data service that provides realistic sample da
 ## What's Been Added
 
 ### 1. **IStubDataService & StubDataService** 
-**Location:** `TimeKeeper.Blazor/Services/StubDataService.cs`
+**Location:** `SmartShift.Blazor/Services/StubDataService.cs`
 
 This service provides the following methods:
 - `GetCurrentEmployeeAsync()` - Returns employee information (division, supervisor, start date, etc.)

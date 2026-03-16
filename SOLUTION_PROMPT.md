@@ -14,7 +14,7 @@
 - Data persistence with relational database
 
 ### Key Stakeholders/Components
-- **TimeKeeper Module:** Handles employee time tracking, punch logging, and activity logging
+- **Smart Shift Module:** Handles employee time tracking, punch logging, and activity logging
 - **SmartOps Module:** Supervisor/Admin workforce management dashboard (staffing requirements, gap analysis, team management)
 - **Workforce Module:** Manages employee information and scheduling
 - **Repository Layer:** Data access and persistence
@@ -106,7 +106,7 @@ TimeManagement Solution/
      - Team management and assignment
      - Schedule visualization (graphs and grids)
    - **Authorization:** Requires Supervisor or Admin role
-   - Uses same authentication pattern as TimeKeeper.Blazor (Azure AD, claims transformation)
+   - Uses same authentication pattern as SmartShift.Blazor (Azure AD, claims transformation)
    - Independent deployment - can run separately from TimeKeeper.Blazor
 
 3. **API Layer:** `SmartOpsManagement.WebApi`
@@ -120,7 +120,7 @@ TimeManagement Solution/
    - Service logic for time tracking and workforce management
    - **Handles all data access** - uses data objects to interact with SQL database
    - Used by API layer and background processing
-   - One core object is the `TimeKeeperBusinessLogic` class which will contain methods for handling time tracking operations, such as logging time entries, calculating total hours, and enforcing business rules.
+  - One core object is the `SmartShiftBusinessLogic` class which will contain methods for handling time tracking operations, such as logging time entries, calculating total hours, and enforcing business rules.
    - Code is broken down into classes based on functionality (e.g., Schedule, Punch) to maintain separation of concerns and improve maintainability. These classes will be partial classes of type TimeKeeperBusinessLogic to allow for better organization and readability of the codebase.
 
 5. **Workforce Business Logic Layer:** `Workforce.Bus`
@@ -237,7 +237,7 @@ SmartShift.Blazor (Employee UI)          SmartOps.Blazor (Supervisor UI)
 
 ## 5. Business Logic & Domain Rules
 
-### TimeKeeper Module
+### Smart Shift Module
 **Purpose:** Track employee time and activities
 
 - **Core Concepts:**
@@ -266,8 +266,8 @@ SmartShift.Blazor (Employee UI)          SmartOps.Blazor (Supervisor UI)
   - Schedule conflicts should be detected
   - Role-based access control (RBAC) enforced
 
-### Integration Points
-- TimeKeeper activities reference Workforce employees
+- ### Integration Points
+- Smart Shift activities reference Workforce employees
 - Workforce hierarchy determines access permissions
 - Reports aggregate data from both modules
 
@@ -348,12 +348,12 @@ The solution uses two separate Blazor applications to maintain separation of con
 
 ### Service Classes
 Service classes in the Blazor projects handle all communication with `SmartOpsManagement.WebApi`:
-- `TimeKeeperApiService` - Handles time tracking API calls (time entries, activities, etc.)
+- `SmartShiftApiService` - Handles time tracking API calls (time entries, activities, etc.)
 - `WorkforceApiService` - Handles workforce-related API calls (employees, schedules, etc.)
 
 **Service Class Pattern:**
 ```csharp
-public class TimeKeeperApiService(HttpClient httpClient)
+public class SmartShiftApiService(HttpClient httpClient)
 {
     public async Task<List<TimeEntry>> GetTimeEntriesAsync() 
         => await httpClient.GetFromJsonAsync<List<TimeEntry>>("api/timeentries") ?? [];

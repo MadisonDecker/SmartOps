@@ -42,8 +42,6 @@ builder.Services.Configure<RoleOptions>(
     builder.Configuration.GetSection(RoleOptions.SectionName));
 builder.Services.AddScoped<IClaimsTransformation, SmartShiftClaims>();
 
-// Add stub data service for UI development
-builder.Services.AddScoped<IStubDataService, StubDataService>();
 // Replaceable real data service that proxies to SmartOps Web API
 builder.Services.AddScoped<IShiftDataService, ShiftDataService>();
 builder.Services.AddHttpContextAccessor();

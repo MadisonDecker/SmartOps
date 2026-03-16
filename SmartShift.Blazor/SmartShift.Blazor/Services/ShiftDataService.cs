@@ -29,10 +29,40 @@ public class ShiftDataService : IShiftDataService
         return client;
     }
 
+    private string? GetUserIdentifierFromClaims()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user == null) return null;
+
+        // Claim types to try, in order. This favors AD-style usernames where available.
+        var claimTypesToTry = new[]
+        {
+            "preferred_username", // common in Azure AD tokens (could be user@domain)
+            "upn",
+            System.Security.Claims.ClaimTypes.Name, // display name or login depending on configuration
+            System.Security.Claims.ClaimTypes.NameIdentifier,
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn",
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+            "samaccountname",
+        };
+
+        foreach (var ct in claimTypesToTry)
+        {
+            var claim = user.FindFirst(ct);
+            if (claim != null && !string.IsNullOrWhiteSpace(claim.Value))
+            {
+                return claim.Value;
+            }
+        }
+
+        return null;
+    }
+
     public async Task<EmployeeInfo> GetCurrentEmployeeAsync()
     {
-        // Try to get from context if available
-        var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        // Try to get the AD login from context if available. Prefer common username claims
+        // (preferred_username, upn) and then fall back to other available name claims.
+        var userId = GetUserIdentifierFromClaims();
         if (string.IsNullOrEmpty(userId))
         {
             // Fallback to a stubbed employee
@@ -43,7 +73,7 @@ public class ShiftDataService : IShiftDataService
         try
         {
             var client = CreateClient();
-            var resp = await client.GetAsync($"api/employees/{Uri.EscapeDataString(userId)}");
+            var resp = await client.GetAsync($"api/schedules/employee/{Uri.EscapeDataString(userId)}/info");
             if (resp.IsSuccessStatusCode)
             {
                 var employee = await resp.Content.ReadFromJsonAsync<EmployeeInfo>(cancellationToken: CancellationToken.None);
@@ -88,7 +118,7 @@ public class ShiftDataService : IShiftDataService
         try
         {
             var client = CreateClient();
-            var resp = await client.GetAsync($"api/employees/{Uri.EscapeDataString(employeeId)}/skills");
+            var resp = await client.GetAsync($"api/schedules/employee/{Uri.EscapeDataString(employeeId)}/skills");
             if (!resp.IsSuccessStatusCode) return new List<EmployeeSkill>();
             var skills = await resp.Content.ReadFromJsonAsync<List<EmployeeSkill>>();
             return skills ?? new List<EmployeeSkill>();

@@ -24,9 +24,10 @@ public partial class EmployeeSchedule
 
     protected override async Task OnInitializedAsync()
     {
-        // Get current user ID from authentication
+        // Get current user ID from authentication and normalize to AD username
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var identityName = authState.User?.Identity?.Name;
+        currentUserId = ExtractLocalUsername(identityName);
 
         if (currentUserId == null)
         {
@@ -71,5 +72,27 @@ public partial class EmployeeSchedule
         ShiftStatus.Cancelled => "bg-danger",
         _ => "bg-secondary"
     };
+
+    private static string? ExtractLocalUsername(string? identityName)
+    {
+        if (string.IsNullOrWhiteSpace(identityName)) return null;
+
+        // If DOMAIN\username format, take the part after the backslash
+        var lastBackslash = identityName.LastIndexOf('\\');
+        if (lastBackslash >= 0 && lastBackslash < identityName.Length - 1)
+        {
+            return identityName.Substring(lastBackslash + 1);
+        }
+
+        // If email style (user@domain), take the part before '@'
+        var atIndex = identityName.IndexOf('@');
+        if (atIndex > 0)
+        {
+            return identityName.Substring(0, atIndex);
+        }
+
+        // Otherwise return the original value
+        return identityName;
+    }
 }
 

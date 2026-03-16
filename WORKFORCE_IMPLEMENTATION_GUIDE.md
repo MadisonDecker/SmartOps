@@ -22,7 +22,7 @@ Data models for workforce management:
 - `ScheduledBreak` - Breaks within shifts
 - `BreakTemplate` & `BreakRule` - Mandatory break templates
 
-#### 2. **TimeKeeper.Bus** (ENHANCED)
+#### 2. **SmartShift.Bus** (ENHANCED)
 Added service interfaces for business logic:
 - `IStaffingRequirementService` - Manage hourly staffing needs
 - `IScheduleService` - Assign shifts and breaks
@@ -31,7 +31,7 @@ Added service interfaces for business logic:
 - `IGapAnalysisService` - Calculate staffing gaps
 - `IBreakManagementService` - Enforce break rules
 
-#### 3. **TimeKeeper.Blazor** (ENHANCED)
+#### 3. **SmartShift.Blazor** (ENHANCED)
 UI Components and pages:
 
 **Employee View:**
@@ -69,10 +69,10 @@ GET  /api/gap-analysis/{division}
 ## Database Migration Steps
 
 ### 1. Add Project Reference
-The `TimeKeeper.Blazor` project needs to reference `TimeManagement.Models`:
+The `SmartShift.Blazor` project needs to reference `TimeManagement.Models`:
 
 ```bash
-cd TimeKeeper.Blazor
+cd SmartShift.Blazor
 dotnet add reference ..\..\TimeManagement.Models\TimeManagement.Models.csproj
 ```
 
@@ -80,8 +80,8 @@ dotnet add reference ..\..\TimeManagement.Models\TimeManagement.Models.csproj
 In Package Manager Console or terminal:
 
 ```bash
-# Navigate to TimeKeeper.Blazor directory
-cd TimeKeeper.Blazor\TimeKeeper.Blazor
+# Navigate to SmartShift.Blazor directory
+cd SmartShift.Blazor\SmartShift.Blazor
 
 # Add migration
 dotnet ef migrations add AddWorkforceModels
@@ -109,7 +109,7 @@ Update-Database
 ## Implementation Roadmap
 
 ### Phase 1: Services Implementation (NEXT)
-Implement service classes in `TimeKeeper.Bus`:
+Implement service classes in `SmartShift.Bus`:
 - [ ] `StaffingRequirementService`
 - [ ] `ScheduleService`
 - [ ] `EmployeeSkillService`
@@ -125,7 +125,7 @@ Create REST endpoints in `TimeManagement.WebApi`:
 - [ ] Gap Analysis endpoints
 
 ### Phase 3: Service Registration
-Update `Program.cs` in TimeKeeper.Blazor:
+Update `Program.cs` in SmartShift.Blazor:
 ```csharp
 // Add to services
 builder.Services.AddScoped<IStaffingRequirementService, StaffingRequirementService>();

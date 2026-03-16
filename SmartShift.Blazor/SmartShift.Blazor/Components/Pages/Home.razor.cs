@@ -12,7 +12,7 @@ namespace SmartShift.Blazor.Components.Pages
         private string pageTitle = "Home - TimeKeeper";
 
         [Inject]
-        private IStubDataService StubDataService { get; set; } = null!;
+        private IShiftDataService ShiftDataService { get; set; } = null!;
 
         protected override async Task OnInitializedAsync()
         {
@@ -44,11 +44,11 @@ namespace SmartShift.Blazor.Components.Pages
                 currentUserId = "stub-user-001";
             }
 
-            // Load stub data
-            nextShift = await StubDataService.GetNextShiftAsync(currentUserId);
+            // Load data from real service
+            nextShift = await ShiftDataService.GetNextShiftAsync(currentUserId);
 
             var weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-            weeklyHours = (decimal)await StubDataService.GetWeeklyHoursAsync(currentUserId, weekStart);
+            weeklyHours = (decimal)await ShiftDataService.GetWeeklyHoursAsync(currentUserId, weekStart);
         }
     }
 }
