@@ -45,6 +45,7 @@ public class EtimeBusinessLogic
         using var connection = new SqlConnection(ConnectionString);
         using var command = new SqlCommand("dbo.GetSchedules", connection);
         command.CommandType = System.Data.CommandType.StoredProcedure;
+        command.CommandTimeout = 120; // seconds — cross-db joins can be slow over large date ranges
         command.Parameters.AddWithValue("@ShiftStartDate", shiftStartDate.Date);
         command.Parameters.AddWithValue("@ShiftEndDate", shiftEndDate.Date);
 
