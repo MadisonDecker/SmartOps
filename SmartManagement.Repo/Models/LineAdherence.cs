@@ -5,15 +5,11 @@ using System.Collections.Generic;
 
 namespace SmartManagement.Repo.Models;
 
-public partial class Latdetail
+public partial class LineAdherence
 {
-    public int LatdetailId { get; set; }
+    public int LineAdherenceId { get; set; }
 
     public string ClientAbbr { get; set; }
-
-    public string CampAbbr { get; set; }
-
-    public string WorkGroup { get; set; }
 
     public DateOnly RequiredDate { get; set; }
 

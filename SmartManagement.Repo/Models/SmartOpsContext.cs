@@ -15,7 +15,7 @@ public partial class SmartOpsContext : DbContext
 
     public virtual DbSet<EtimeShift> EtimeShifts { get; set; }
 
-    public virtual DbSet<Latdetail> Latdetails { get; set; }
+    public virtual DbSet<LineAdherence> LineAdherences { get; set; }
 
     public virtual DbSet<Schedule> Schedules { get; set; }
 
@@ -37,12 +37,10 @@ public partial class SmartOpsContext : DbContext
             entity.Property(e => e.ShiftStart).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<Latdetail>(entity =>
+        modelBuilder.Entity<LineAdherence>(entity =>
         {
-            entity.ToTable("LATDetails");
+            entity.HasKey(e => e.LineAdherenceId).HasName("PK_LineAdherence");
 
-            entity.Property(e => e.LatdetailId).HasColumnName("LATDetailId");
-            entity.Property(e => e.CampAbbr).HasMaxLength(10);
             entity.Property(e => e.ClientAbbr)
                 .IsRequired()
                 .HasMaxLength(10);
@@ -52,7 +50,6 @@ public partial class SmartOpsContext : DbContext
                 .IsRowVersion()
                 .IsConcurrencyToken();
             entity.Property(e => e.LastUpdatedDate).HasColumnType("datetime");
-            entity.Property(e => e.WorkGroup).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Schedule>(entity =>

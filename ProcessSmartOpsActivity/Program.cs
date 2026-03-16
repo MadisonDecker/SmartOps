@@ -17,15 +17,21 @@ optionsBuilder.UseSqlServer(connectionString);
 using var context = new SmartOpsContext(optionsBuilder.Options);
 var businessLogic = new SmartOpsBusinessLogic(context);
 
+var importedRecords = await businessLogic.ImportLineAdherenceFromExcelAsync(
+    @"D:\Code\Git\MadisonDecker\SmartOps\DOCS INFOCISION.xlsx",
+    "SAV MAR 15DAY",
+    "CXCR"  // Client abbreviation for SAV CXCR
+);
+Console.WriteLine($"Imported {importedRecords.Count} line adherence records.");
+
+// Example: Process Line Adherences
+await ProcessLineAdherencesAsync(businessLogic);
+
+Console.WriteLine("SmartOps Activity Processing completed.");
 Console.WriteLine("SmartOps Activity Processing started.");
 
 // Export and Import Etime schedules for this week
 await ExportAndImportEtimeSchedules(businessLogic);
-
-// Example: Process LAT Details
-await ProcessLatDetailsAsync(businessLogic);
-
-Console.WriteLine("SmartOps Activity Processing completed.");
 
 /// <summary>
 /// Exports Etime schedules to JSON and then imports them into the database.
@@ -66,11 +72,11 @@ static async Task ExportAndImportEtimeSchedules(SmartOpsBusinessLogic businessLo
 }
 
 /// <summary>
-/// Example method demonstrating LAT Detail operations.
+/// Example method demonstrating Line Adherence operations.
 /// </summary>
-static async Task ProcessLatDetailsAsync(SmartOpsBusinessLogic businessLogic)
+static async Task ProcessLineAdherencesAsync(SmartOpsBusinessLogic businessLogic)
 {
-    // Get all LAT details
-    var allDetails = await businessLogic.GetAllLatDetailsAsync();
-    Console.WriteLine($"Found {allDetails.Count} LAT details in the database.");
+    // Get all line adherence records
+    var allDetails = await businessLogic.GetAllLineAdherencesAsync();
+    Console.WriteLine($"Found {allDetails.Count} line adherence records in the database.");
 }

@@ -1,0 +1,43 @@
+:root{
+  /* Primary palette */
+  --primary-600: #1b6ec2; /* button bg */
+  --primary-700: #1861ac; /* button border */
+  --link-color: #006bb7;
+  --focus-ring: #258cfb;
+
+  /* Sidebar / brand */
+  --sidebar-start: #004d2f;
+  --sidebar-end: #00a651;
+
+  /* Validation */
+  --error-color: #e50000;
+  --success-color: #26b050;
+}
+
+html, body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+a, .btn-link { color: var(--link-color); }
+
+.btn-primary {
+  color: #fff;
+  background-color: var(--primary-600);
+  border-color: var(--primary-700);
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--focus-ring);
+}
+
+.blazor-error-boundary{ background: #b32121; color: white; padding: 1rem 1rem 1rem 3.7rem; }
+
+.sidebar { background-image: linear-gradient(180deg, var(--sidebar-start) 0%, var(--sidebar-end) 70%); }
+
+.top-row { background-color: #f7f7f7; border-bottom: 1px solid #d6d5d5; height: 3.5rem; display:flex; align-items:center; justify-content:flex-end }
+
+.validation-message { color: var(--error-color); }
+
+.valid.modified:not([type=checkbox]) { outline: 1px solid var(--success-color); }
+
+.invalid { outline: 1px solid var(--error-color); }

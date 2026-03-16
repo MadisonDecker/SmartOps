@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SmartManagement.Repo\SmartManagement.Repo.csproj" />
     <ProjectReference Include="..\SmartOps.Models\SmartOps.Models.csproj" />
   </ItemGroup>

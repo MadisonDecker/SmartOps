@@ -34,6 +34,8 @@ builder.Services.AddControllers()
 
 // Add HTTP client factory for Graph API calls in claims transformation
 builder.Services.AddHttpClient();
+// Named client for SmartOps Web API
+builder.Services.AddHttpClient("SmartOpsApi");
 
 // Configure and add claims transformation for role assignment via configuration
 builder.Services.Configure<RoleOptions>(
@@ -42,6 +44,8 @@ builder.Services.AddScoped<IClaimsTransformation, SmartShiftClaims>();
 
 // Add stub data service for UI development
 builder.Services.AddScoped<IStubDataService, StubDataService>();
+// Replaceable real data service that proxies to SmartOps Web API
+builder.Services.AddScoped<IShiftDataService, ShiftDataService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();

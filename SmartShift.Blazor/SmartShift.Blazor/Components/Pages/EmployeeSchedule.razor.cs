@@ -14,7 +14,7 @@ public partial class EmployeeSchedule
     private string? currentUserId;
 
     [Inject]
-    private IStubDataService StubDataService { get; set; } = null!;
+    private IShiftDataService ShiftDataService { get; set; } = null!;
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = null!;
@@ -42,12 +42,12 @@ public partial class EmployeeSchedule
     private async Task LoadSchedule()
     {
         var weekEnd = weekStart.AddDays(7);
-        shifts = await StubDataService.GetEmployeeShiftsAsync(currentUserId, weekStart, weekEnd);
+        shifts = await ShiftDataService.GetEmployeeShiftsAsync(currentUserId, weekStart, weekEnd);
 
-        if (shifts.Any())
+        if (shifts != null && shifts.Any())
         {
-            nextShift = await StubDataService.GetNextShiftAsync(currentUserId);
-            weeklyHours = (decimal)await StubDataService.GetWeeklyHoursAsync(currentUserId, weekStart);
+            nextShift = await ShiftDataService.GetNextShiftAsync(currentUserId);
+            weeklyHours = (decimal)await ShiftDataService.GetWeeklyHoursAsync(currentUserId, weekStart);
         }
     }
 
