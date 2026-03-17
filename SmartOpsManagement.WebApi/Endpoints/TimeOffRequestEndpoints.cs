@@ -20,9 +20,23 @@ public static class TimeOffRequestEndpoints
 
         group.MapPost("/", SubmitTimeOffRequest)
             .WithName("SubmitTimeOffRequest")
-            .WithSummary("Submits a new time-off request for a future shift")
+            .WithSummary("Submits a new time-off request for a future date range")
             .Produces<TimeOffRequestDto>(StatusCodes.Status201Created)
             .Produces<string>(StatusCodes.Status400BadRequest);
+
+        group.MapPost("/{id:int}/approve", ApproveTimeOffRequest)
+            .WithName("ApproveTimeOffRequest")
+            .WithSummary("Approves a pending time-off request and creates a ScheduleException")
+            .Produces<TimeOffRequestDto>(StatusCodes.Status200OK)
+            .Produces<string>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:int}/deny", DenyTimeOffRequest)
+            .WithName("DenyTimeOffRequest")
+            .WithSummary("Denies a pending time-off request")
+            .Produces<TimeOffRequestDto>(StatusCodes.Status200OK)
+            .Produces<string>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> GetTimeOffRequestsForEmployee(
@@ -40,8 +54,8 @@ public static class TimeOffRequestEndpoints
         TimeOffRequestDto dto,
         SmartOpsBusinessLogic businessLogic)
     {
-        if (string.IsNullOrWhiteSpace(dto.AdloginName) || dto.EtimeShiftId <= 0)
-            return Results.BadRequest("AdloginName and EtimeShiftId are required.");
+        if (string.IsNullOrWhiteSpace(dto.AdloginName) || dto.StartDate == default)
+            return Results.BadRequest("AdloginName and StartDate are required.");
 
         var (result, error) = await businessLogic.SubmitTimeOffRequestAsync(dto);
         if (error != null)
@@ -49,4 +63,37 @@ public static class TimeOffRequestEndpoints
 
         return Results.Created($"/api/timeoff/{result!.TimeOffRequestId}", result);
     }
+
+    private static async Task<IResult> ApproveTimeOffRequest(
+        int id,
+        ReviewDto review,
+        SmartOpsBusinessLogic businessLogic)
+    {
+        if (string.IsNullOrWhiteSpace(review.ReviewedBy))
+            return Results.BadRequest("ReviewedBy is required.");
+
+        var (result, error) = await businessLogic.ReviewTimeOffRequestAsync(id, approved: true, review.ReviewedBy, review.Notes);
+        if (error != null)
+            return error.Contains("not found") ? Results.NotFound(error) : Results.BadRequest(error);
+
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> DenyTimeOffRequest(
+        int id,
+        ReviewDto review,
+        SmartOpsBusinessLogic businessLogic)
+    {
+        if (string.IsNullOrWhiteSpace(review.ReviewedBy))
+            return Results.BadRequest("ReviewedBy is required.");
+
+        var (result, error) = await businessLogic.ReviewTimeOffRequestAsync(id, approved: false, review.ReviewedBy, review.Notes);
+        if (error != null)
+            return error.Contains("not found") ? Results.NotFound(error) : Results.BadRequest(error);
+
+        return Results.Ok(result);
+    }
 }
+
+/// <summary>Request body for approve/deny actions.</summary>
+public record ReviewDto(string ReviewedBy, string? Notes);

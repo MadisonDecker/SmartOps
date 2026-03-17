@@ -87,7 +87,7 @@ public partial class EmployeeSchedule
     // Returns the active (non-denied, non-cancelled) request for a shift, if one exists.
     private TimeOffRequestDto? GetActiveRequest(ScheduledShift shift) =>
         timeOffRequests.FirstOrDefault(r =>
-            r.EtimeShiftId == shift.Id &&
+            r.StartDate == DateOnly.FromDateTime(shift.StartTime.Date) &&
             r.Status != TimeOffStatus.Denied &&
             r.Status != TimeOffStatus.Cancelled);
 
@@ -121,11 +121,10 @@ public partial class EmployeeSchedule
 
         var dto = new TimeOffRequestDto
         {
-            AdloginName  = currentUserId!,
-            EtimeShiftId = selectedShift!.Id,
-            ShiftStart   = selectedShift.StartTime,
-            ShiftEnd     = selectedShift.EndTime,
-            Reason       = timeOffReason.Trim()
+            AdloginName = currentUserId!,
+            StartDate   = DateOnly.FromDateTime(selectedShift!.StartTime.Date),
+            EndDate     = DateOnly.FromDateTime(selectedShift!.StartTime.Date),
+            Reason      = timeOffReason.Trim()
         };
 
         var result = await ShiftDataService.SubmitTimeOffRequestAsync(dto);

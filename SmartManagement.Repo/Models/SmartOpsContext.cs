@@ -15,13 +15,17 @@ public partial class SmartOpsContext : DbContext
 
     public virtual DbSet<EtimeShift> EtimeShifts { get; set; }
 
+    public virtual DbSet<Latdetail> Latdetails { get; set; }
+
     public virtual DbSet<LineAdherence> LineAdherences { get; set; }
 
-    public virtual DbSet<Schedule> Schedules { get; set; }
+    public virtual DbSet<ScheduleException> ScheduleExceptions { get; set; }
 
-    public virtual DbSet<Shift> Shifts { get; set; }
+    public virtual DbSet<ScheduleExceptionType> ScheduleExceptionTypes { get; set; }
 
-    public virtual DbSet<ShiftBreak> ShiftBreaks { get; set; }
+    public virtual DbSet<ScheduleShiftPattern> ScheduleShiftPatterns { get; set; }
+
+    public virtual DbSet<ScheduleTemplate> ScheduleTemplates { get; set; }
 
     public virtual DbSet<TimeOffRequest> TimeOffRequests { get; set; }
 
@@ -31,6 +35,10 @@ public partial class SmartOpsContext : DbContext
     {
         modelBuilder.Entity<EtimeShift>(entity =>
         {
+            entity.HasIndex(e => new { e.AdloginName, e.ShiftStart }, "IX_EtimeShifts_ADLoginName_ShiftStart");
+
+            entity.HasIndex(e => new { e.ShiftStart, e.ShiftEnd }, "IX_EtimeShifts_ShiftStart");
+
             entity.Property(e => e.AdloginName)
                 .IsRequired()
                 .HasMaxLength(200)
@@ -41,10 +49,12 @@ public partial class SmartOpsContext : DbContext
             entity.Property(e => e.ShiftStart).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<LineAdherence>(entity =>
+        modelBuilder.Entity<Latdetail>(entity =>
         {
-            entity.HasKey(e => e.LineAdherenceId).HasName("PK_LineAdherence");
+            entity.ToTable("LATDetails");
 
+            entity.Property(e => e.LatdetailId).HasColumnName("LATDetailId");
+            entity.Property(e => e.CampAbbr).HasMaxLength(10);
             entity.Property(e => e.ClientAbbr)
                 .IsRequired()
                 .HasMaxLength(10);
@@ -54,112 +64,170 @@ public partial class SmartOpsContext : DbContext
                 .IsRowVersion()
                 .IsConcurrencyToken();
             entity.Property(e => e.LastUpdatedDate).HasColumnType("datetime");
+            entity.Property(e => e.WorkGroup).HasMaxLength(50);
         });
 
-        modelBuilder.Entity<Schedule>(entity =>
+        modelBuilder.Entity<LineAdherence>(entity =>
         {
-            entity.Property(e => e.Adlogin)
+            entity.ToTable("LineAdherence");
+
+            entity.HasIndex(e => new { e.ClientAbbr, e.RequiredDate, e.RequiredTime }, "IX_LineAdherence_ClientAbbr_RequiredDate");
+
+            entity.Property(e => e.ClientAbbr)
                 .IsRequired()
-                .HasMaxLength(200)
-                .HasColumnName("ADLogin");
-            entity.Property(e => e.EndDate).HasColumnType("datetime");
+                .HasMaxLength(10);
+            entity.Property(e => e.InsertedUtcDate)
+                .HasDefaultValueSql("(getutcdate())", "DF_LineAdherence_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastTimestamp)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+            entity.Property(e => e.LastUpdatedDate)
+                .HasDefaultValueSql("(getutcdate())", "DF_LineAdherence_Updated")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RequiredTime).HasPrecision(0);
+        });
+
+        modelBuilder.Entity<ScheduleException>(entity =>
+        {
+            entity.ToTable("ScheduleException");
+
+            entity.HasIndex(e => new { e.AdloginName, e.StartDate, e.EndDate }, "IX_ScheduleException_AdloginName_StartDate");
+
+            entity.HasIndex(e => new { e.ScheduleTemplateId, e.StartDate }, "IX_ScheduleException_TemplateId");
+
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.CreatedBy)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_ScheduleException_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_ScheduleException_Updated")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            entity.HasOne(d => d.ExceptionType).WithMany(p => p.ScheduleExceptions)
+                .HasForeignKey(d => d.ExceptionTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Exception_Type");
+
+            entity.HasOne(d => d.ScheduleTemplate).WithMany(p => p.ScheduleExceptions)
+                .HasForeignKey(d => d.ScheduleTemplateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Exception_Template");
+
+            entity.HasOne(d => d.TimeOffRequest).WithMany(p => p.ScheduleExceptions)
+                .HasForeignKey(d => d.TimeOffRequestId)
+                .HasConstraintName("FK_Exception_TimeOffRequest");
+        });
+
+        modelBuilder.Entity<ScheduleExceptionType>(entity =>
+        {
+            entity.HasKey(e => e.ExceptionTypeId);
+
+            entity.ToTable("ScheduleExceptionType");
+
+            entity.Property(e => e.TypeName)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<ScheduleShiftPattern>(entity =>
+        {
+            entity.HasKey(e => e.ShiftPatternId);
+
+            entity.ToTable("ScheduleShiftPattern");
+
+            entity.HasIndex(e => new { e.ScheduleTemplateId, e.DayOfWeek }, "UX_ShiftPattern_DayPerTemplate").IsUnique();
+
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_ShiftPattern_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_ShiftPattern_Updated")
+                .HasColumnType("datetime");
+            entity.Property(e => e.PayCode).HasMaxLength(50);
+            entity.Property(e => e.ShiftEndTime).HasPrecision(0);
+            entity.Property(e => e.ShiftStartTime).HasPrecision(0);
+
+            entity.HasOne(d => d.ScheduleTemplate).WithMany(p => p.ScheduleShiftPatterns)
+                .HasForeignKey(d => d.ScheduleTemplateId)
+                .HasConstraintName("FK_ShiftPattern_Template");
+        });
+
+        modelBuilder.Entity<ScheduleTemplate>(entity =>
+        {
+            entity.ToTable("ScheduleTemplate");
+
+            entity.HasIndex(e => new { e.AdloginName, e.EffectiveDate }, "IX_ScheduleTemplate_AdloginName_EffectiveDate");
+
+            entity.HasIndex(e => e.AdloginName, "UX_ScheduleTemplate_OneActivePerEmployee")
+                .IsUnique()
+                .HasFilter("([EndDate] IS NULL)");
+
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(100);
             entity.Property(e => e.ExternalMatchId)
                 .IsRequired()
                 .HasMaxLength(50);
-            entity.Property(e => e.InsertedDateUtc).HasColumnType("datetime");
-            entity.Property(e => e.LastUpdatedUtc).HasColumnType("datetime");
-            entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(200);
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_ScheduleTemplate_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_ScheduleTemplate_Updated")
+                .HasColumnType("datetime");
             entity.Property(e => e.PayGroup)
                 .IsRequired()
                 .HasMaxLength(50);
-            entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.Timestamp)
                 .IsRequired()
                 .IsRowVersion()
                 .IsConcurrencyToken();
-        });
-
-        modelBuilder.Entity<Shift>(entity =>
-        {
-            entity.Property(e => e.EndTime).HasColumnType("datetime");
-            entity.Property(e => e.InsertedDateUtc).HasColumnType("datetime");
-            entity.Property(e => e.LastUpdatedUtc).HasColumnType("datetime");
-            entity.Property(e => e.Lasttimestamp)
-                .IsRequired()
-                .IsRowVersion()
-                .IsConcurrencyToken();
-            entity.Property(e => e.PayCode).HasMaxLength(50);
-            entity.Property(e => e.StartTime).HasColumnType("datetime");
-
-            entity.HasOne(d => d.Schedule).WithMany(p => p.Shifts)
-                .HasForeignKey(d => d.ScheduleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Shifts_Schedules");
-        });
-
-        modelBuilder.Entity<ShiftBreak>(entity =>
-        {
-            entity.Property(e => e.EndTime).HasColumnType("datetime");
-            entity.Property(e => e.InsertedDateUtc).HasColumnType("datetime");
-            entity.Property(e => e.LastUpdatedUtc).HasColumnType("datetime");
-            entity.Property(e => e.Lasttimestamp)
-                .IsRequired()
-                .IsRowVersion()
-                .IsConcurrencyToken();
-            entity.Property(e => e.StartTime).HasColumnType("datetime");
-
-            entity.HasOne(d => d.Schedule).WithMany(p => p.ShiftBreaks)
-                .HasForeignKey(d => d.ScheduleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ShiftBreaks_Schedules");
         });
 
         modelBuilder.Entity<TimeOffRequest>(entity =>
         {
             entity.ToTable("TimeOffRequest");
 
+            entity.HasIndex(e => new { e.AdloginName, e.StartDate, e.EndDate }, "IX_TimeOffRequest_AdloginName_StartDate");
+
             entity.HasIndex(e => new { e.AdloginName, e.StatusId }, "IX_TimeOffRequest_AdloginName_StatusId");
 
-            entity.HasIndex(e => new { e.StatusId, e.ShiftStart }, "IX_TimeOffRequest_StatusId_ShiftStart");
-
-            entity.HasIndex(e => new { e.EtimeShiftId, e.AdloginName }, "UX_TimeOffRequest_ShiftId_AdloginName_Active")
-                .IsUnique()
-                .HasFilter("([StatusId]<>(3) AND [StatusId]<>(4))");
+            entity.HasIndex(e => new { e.StatusId, e.StartDate }, "IX_TimeOffRequest_StatusId_StartDate");
 
             entity.Property(e => e.AdloginName)
                 .IsRequired()
                 .HasMaxLength(100);
             entity.Property(e => e.InsertedDateUtc)
-                .HasDefaultValueSql("(getutcdate())")
+                .HasDefaultValueSql("(getutcdate())", "DF_TimeOffRequest_Inserted")
                 .HasColumnType("datetime");
             entity.Property(e => e.LastUpdatedUtc)
-                .HasDefaultValueSql("(getutcdate())")
+                .HasDefaultValueSql("(getutcdate())", "DF_TimeOffRequest_Updated")
                 .HasColumnType("datetime");
             entity.Property(e => e.Reason)
                 .IsRequired()
                 .HasMaxLength(500);
             entity.Property(e => e.RequestedOn)
-                .HasDefaultValueSql("(getutcdate())")
+                .HasDefaultValueSql("(getutcdate())", "DF_TimeOffRequest_RequestedOn")
                 .HasColumnType("datetime");
             entity.Property(e => e.ReviewNotes).HasMaxLength(500);
             entity.Property(e => e.ReviewedBy).HasMaxLength(100);
             entity.Property(e => e.ReviewedOn).HasColumnType("datetime");
-            entity.Property(e => e.ScheduleUpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.ScheduleUpdatedOn).HasColumnType("datetime");
-            entity.Property(e => e.ShiftEnd).HasColumnType("datetime");
-            entity.Property(e => e.ShiftStart).HasColumnType("datetime");
-            entity.Property(e => e.StatusId).HasDefaultValue((byte)1);
+            entity.Property(e => e.StatusId).HasDefaultValue((byte)1, "DF_TimeOffRequest_Status");
             entity.Property(e => e.Timestamp)
                 .IsRequired()
                 .IsRowVersion()
                 .IsConcurrencyToken();
 
-            entity.HasOne(d => d.EtimeShift).WithMany(p => p.TimeOffRequests)
-                .HasForeignKey(d => d.EtimeShiftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TimeOffRequest_EtimeShift");
+            entity.HasOne(d => d.ScheduleException).WithMany(p => p.TimeOffRequests)
+                .HasForeignKey(d => d.ScheduleExceptionId)
+                .HasConstraintName("FK_TimeOffRequest_ScheduleException");
 
             entity.HasOne(d => d.Status).WithMany(p => p.TimeOffRequests)
                 .HasForeignKey(d => d.StatusId)

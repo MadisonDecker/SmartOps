@@ -23,19 +23,27 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[LineAdherences]",
+         "Name": "[dbo].[LATDetails]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Schedules]",
+         "Name": "[dbo].[LineAdherence]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[ShiftBreaks]",
+         "Name": "[dbo].[ScheduleException]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Shifts]",
+         "Name": "[dbo].[ScheduleExceptionType]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ScheduleShiftPattern]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ScheduleTemplate]",
          "ObjectType": 0
       },
       {

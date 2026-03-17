@@ -30,6 +30,4 @@ public partial class EtimeShift
     public DateTime ShiftEnd { get; set; }
 
     public int BreakMin { get; set; }
-
-    public virtual ICollection<TimeOffRequest> TimeOffRequests { get; set; } = new List<TimeOffRequest>();
 }

@@ -5,25 +5,19 @@ using System.Collections.Generic;
 
 namespace SmartManagement.Repo.Models;
 
-public partial class Schedule
+public partial class ScheduleTemplate
 {
-    public int ScheduleId { get; set; }
+    public int ScheduleTemplateId { get; set; }
 
-    public string Name { get; set; }
-
-    public string Adlogin { get; set; }
+    public string AdloginName { get; set; }
 
     public string ExternalMatchId { get; set; }
 
     public string PayGroup { get; set; }
 
-    public DateTime StartDate { get; set; }
-
-    public DateTime EndDate { get; set; }
-
-    public bool IsOngoing { get; set; }
-
     public DateOnly EffectiveDate { get; set; }
+
+    public DateOnly? EndDate { get; set; }
 
     public DateTime InsertedDateUtc { get; set; }
 
@@ -31,7 +25,7 @@ public partial class Schedule
 
     public byte[] Timestamp { get; set; }
 
-    public virtual ICollection<ShiftBreak> ShiftBreaks { get; set; } = new List<ShiftBreak>();
+    public virtual ICollection<ScheduleException> ScheduleExceptions { get; set; } = new List<ScheduleException>();
 
-    public virtual ICollection<Shift> Shifts { get; set; } = new List<Shift>();
+    public virtual ICollection<ScheduleShiftPattern> ScheduleShiftPatterns { get; set; } = new List<ScheduleShiftPattern>();
 }

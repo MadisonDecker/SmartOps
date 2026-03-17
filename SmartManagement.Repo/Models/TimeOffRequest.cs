@@ -11,11 +11,9 @@ public partial class TimeOffRequest
 
     public string AdloginName { get; set; }
 
-    public int EtimeShiftId { get; set; }
+    public DateOnly StartDate { get; set; }
 
-    public DateTime ShiftStart { get; set; }
-
-    public DateTime ShiftEnd { get; set; }
+    public DateOnly EndDate { get; set; }
 
     public string Reason { get; set; }
 
@@ -29,11 +27,7 @@ public partial class TimeOffRequest
 
     public string ReviewNotes { get; set; }
 
-    public bool ScheduleUpdated { get; set; }
-
-    public DateTime? ScheduleUpdatedOn { get; set; }
-
-    public string ScheduleUpdatedBy { get; set; }
+    public int? ScheduleExceptionId { get; set; }
 
     public DateTime InsertedDateUtc { get; set; }
 
@@ -41,7 +35,9 @@ public partial class TimeOffRequest
 
     public byte[] Timestamp { get; set; }
 
-    public virtual EtimeShift EtimeShift { get; set; }
+    public virtual ScheduleException ScheduleException { get; set; }
+
+    public virtual ICollection<ScheduleException> ScheduleExceptions { get; set; } = new List<ScheduleException>();
 
     public virtual TimeOffRequestStatus Status { get; set; }
 }

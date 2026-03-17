@@ -19,36 +19,37 @@ public partial class SmartOpsBusinessLogic
     }
 
     /// <summary>
-    /// Persists a new time-off request and returns it with the generated ID.
-    /// Enforces that the shift starts more than 7 days from today.
+    /// Persists a new time-off request.
+    /// Enforces that the first requested day is more than 7 days from today
+    /// and that no overlapping active request already exists.
     /// </summary>
     public async Task<(TimeOffRequestDto? Result, string? Error)> SubmitTimeOffRequestAsync(TimeOffRequestDto dto)
     {
-        if (dto.ShiftStart.Date <= DateTime.Today.AddDays(7))
-            return (null, "Time-off requests can only be submitted for shifts more than 7 days in the future.");
+        if (dto.StartDate.ToDateTime(TimeOnly.MinValue) <= DateTime.Today.AddDays(7))
+            return (null, "Time-off requests can only be submitted for dates more than 7 days in the future.");
 
-        // Guard against duplicate active requests (Pending or Approved) for the same shift
+        // Guard against overlapping active requests (Pending or Approved)
         var duplicate = _context.TimeOffRequests.Any(r =>
-            r.EtimeShiftId == dto.EtimeShiftId &&
-            r.AdloginName  == dto.AdloginName  &&
+            r.AdloginName == dto.AdloginName  &&
+            r.StartDate   <= dto.EndDate       &&
+            r.EndDate     >= dto.StartDate     &&
             r.StatusId != (byte)TimeOffStatus.Denied    &&
             r.StatusId != (byte)TimeOffStatus.Cancelled);
 
         if (duplicate)
-            return (null, "An active time-off request already exists for this shift.");
+            return (null, "An active time-off request already exists for this date range.");
 
         var now = DateTime.UtcNow;
         var entity = new TimeOffRequest
         {
-            AdloginName      = dto.AdloginName,
-            EtimeShiftId     = dto.EtimeShiftId,
-            ShiftStart       = dto.ShiftStart,
-            ShiftEnd         = dto.ShiftEnd,
-            Reason           = dto.Reason,
-            StatusId         = (byte)TimeOffStatus.Pending,
-            RequestedOn      = now,
-            InsertedDateUtc  = now,
-            LastUpdatedUtc   = now
+            AdloginName     = dto.AdloginName,
+            StartDate       = dto.StartDate,
+            EndDate         = dto.EndDate,
+            Reason          = dto.Reason,
+            StatusId        = (byte)TimeOffStatus.Pending,
+            RequestedOn     = now,
+            InsertedDateUtc = now,
+            LastUpdatedUtc  = now
         };
 
         _context.TimeOffRequests.Add(entity);
@@ -60,19 +61,76 @@ public partial class SmartOpsBusinessLogic
         return (dto, null);
     }
 
+    /// <summary>
+    /// Approves or denies a pending time-off request.
+    /// On approval, creates a ScheduleException that will suppress the
+    /// employee's shifts for the requested date range.
+    /// </summary>
+    public async Task<(TimeOffRequestDto? Result, string? Error)> ReviewTimeOffRequestAsync(
+        int timeOffRequestId, bool approved, string reviewedBy, string? notes)
+    {
+        var entity = _context.TimeOffRequests.FirstOrDefault(r => r.TimeOffRequestId == timeOffRequestId);
+        if (entity == null)
+            return (null, "Time-off request not found.");
+
+        if (entity.StatusId != (byte)TimeOffStatus.Pending)
+            return (null, "Only pending requests can be reviewed.");
+
+        var now = DateTime.UtcNow;
+        entity.StatusId       = approved ? (byte)TimeOffStatus.Approved : (byte)TimeOffStatus.Denied;
+        entity.ReviewedBy     = reviewedBy;
+        entity.ReviewedOn     = now;
+        entity.ReviewNotes    = notes;
+        entity.LastUpdatedUtc = now;
+
+        if (approved)
+        {
+            // Attach a ScheduleException to suppress the employee's shifts
+            var template = _context.ScheduleTemplates
+                .FirstOrDefault(t =>
+                    t.AdloginName == entity.AdloginName &&
+                    t.EndDate     == null);
+
+            if (template != null)
+            {
+                var exception = new ScheduleException
+                {
+                    AdloginName        = entity.AdloginName,
+                    ScheduleTemplateId = template.ScheduleTemplateId,
+                    ExceptionTypeId    = 1,  // TimeOff (seed value)
+                    StartDate          = entity.StartDate,
+                    EndDate            = entity.EndDate,
+                    TimeOffRequestId   = entity.TimeOffRequestId,
+                    Notes              = entity.Reason,
+                    CreatedBy          = reviewedBy,
+                    InsertedDateUtc    = now,
+                    LastUpdatedUtc     = now
+                };
+
+                _context.ScheduleExceptions.Add(exception);
+                await _context.SaveChangesAsync();
+
+                entity.ScheduleExceptionId = exception.ScheduleExceptionId;
+                entity.LastUpdatedUtc      = now;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return (MapToDto(entity), null);
+    }
+
     private static TimeOffRequestDto MapToDto(TimeOffRequest r) => new()
     {
-        TimeOffRequestId = r.TimeOffRequestId,
-        AdloginName      = r.AdloginName,
-        EtimeShiftId     = r.EtimeShiftId,
-        ShiftStart       = r.ShiftStart,
-        ShiftEnd         = r.ShiftEnd,
-        Reason           = r.Reason,
-        Status           = (TimeOffStatus)r.StatusId,
-        RequestedOn      = r.RequestedOn,
-        ReviewedBy       = r.ReviewedBy,
-        ReviewedOn       = r.ReviewedOn,
-        ReviewNotes      = r.ReviewNotes,
-        ScheduleUpdated  = r.ScheduleUpdated
+        TimeOffRequestId    = r.TimeOffRequestId,
+        AdloginName         = r.AdloginName,
+        StartDate           = r.StartDate,
+        EndDate             = r.EndDate,
+        Reason              = r.Reason,
+        Status              = (TimeOffStatus)r.StatusId,
+        RequestedOn         = r.RequestedOn,
+        ReviewedBy          = r.ReviewedBy,
+        ReviewedOn          = r.ReviewedOn,
+        ReviewNotes         = r.ReviewNotes,
+        ScheduleExceptionId = r.ScheduleExceptionId
     };
 }

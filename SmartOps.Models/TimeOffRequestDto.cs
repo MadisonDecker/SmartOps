@@ -3,25 +3,30 @@ namespace SmartOps.Models;
 /// <summary>
 /// Data transfer object for time-off requests.
 /// Shared between the Blazor UI and the Web API.
+/// A request covers a date range (single day or multi-day vacation).
 /// </summary>
 public class TimeOffRequestDto
 {
     public int TimeOffRequestId { get; set; }
     public string AdloginName { get; set; } = string.Empty;
-    public int EtimeShiftId { get; set; }
-    public DateTime ShiftStart { get; set; }
-    public DateTime ShiftEnd { get; set; }
+
+    /// <summary>First day of the requested time off.</summary>
+    public DateOnly StartDate { get; set; }
+
+    /// <summary>Last day of the requested time off (same as StartDate for a single shift).</summary>
+    public DateOnly EndDate { get; set; }
+
     public string Reason { get; set; } = string.Empty;
     public TimeOffStatus Status { get; set; } = TimeOffStatus.Pending;
     public DateTime RequestedOn { get; set; }
 
-    // Supervisor review fields
+    // Supervisor review
     public string? ReviewedBy { get; set; }
     public DateTime? ReviewedOn { get; set; }
     public string? ReviewNotes { get; set; }
 
-    // Schedule update tracking
-    public bool ScheduleUpdated { get; set; }
+    // Populated when the request is approved and a ScheduleException is created
+    public int? ScheduleExceptionId { get; set; }
 }
 
 public enum TimeOffStatus : byte
