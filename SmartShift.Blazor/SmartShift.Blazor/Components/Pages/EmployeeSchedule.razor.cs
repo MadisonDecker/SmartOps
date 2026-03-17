@@ -13,6 +13,7 @@ public partial class EmployeeSchedule
     private decimal weeklyHours;
     private DateTime weekStart;
     private string? currentUserId;
+    private string? employeeDisplayName;
 
     // Time-off request state
     private bool showTimeOffModal;
@@ -36,6 +37,7 @@ public partial class EmployeeSchedule
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var identityName = authState.User?.Identity?.Name;
         currentUserId = ExtractLocalUsername(identityName);
+        employeeDisplayName = authState.User?.FindFirst("name")?.Value ?? currentUserId;
 
         if (currentUserId == null)
         {

@@ -8,7 +8,7 @@
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-4">My Schedule</h1>
+            <h1 class="mb-4">Schedule for @employeeDisplayName</h1>
         </div>
     </div>
 
@@ -19,7 +19,6 @@
                     <h5 class="card-title">Next Shift</h5>
                     @if (nextShift != null)
                     {
-                        <p class="mb-1"><strong>@nextShift.Division</strong></p>
                         <p class="mb-1">@nextShift.StartTime.ToString("HH:mm") – @nextShift.EndTime.ToString("HH:mm")</p>
                         <p class="text-muted">@((nextShift.StartTime - DateTime.Now).TotalHours > 0 ? $"In {Math.Floor((nextShift.StartTime - DateTime.Now).TotalHours)} hours" : "Today")</p>
                     }
@@ -62,7 +61,6 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Date</th>
-                                        <th>Division</th>
                                         <th>Client</th>
                                         <th>Start Time</th>
                                         <th>End Time</th>
@@ -76,7 +74,6 @@
                                     {
                                         <tr>
                                             <td>@shift.StartTime.ToString("ddd, MMM dd")</td>
-                                            <td>@shift.Division</td>
                                             <td>@(shift.ClientName ?? "-")</td>
                                             <td>@shift.StartTime.ToString("HH:mm")</td>
                                             <td>@shift.EndTime.ToString("HH:mm")</td>
@@ -112,7 +109,7 @@
                                         @if (shift.Breaks.Any())
                                         {
                                             <tr class="table-light">
-                                                <td colspan="8">
+                                                <td colspan="7">
                                                     <small class="text-muted">
                                                         <strong>Breaks:</strong>
                                                         @foreach (var breakItem in shift.Breaks)
