@@ -223,6 +223,8 @@ BEGIN
         [ShiftPatternId]     INT          NOT NULL IDENTITY(1,1),
         [ScheduleTemplateId] INT          NOT NULL,
         [DayOfWeek]          TINYINT      NOT NULL,   -- 0–6
+        [ShiftSequence]      TINYINT      NOT NULL CONSTRAINT [DF_ShiftPattern_Sequence] DEFAULT 1,
+                                                      -- 1 = normal/start portion, 2 = post-midnight continuation
         [ShiftStartTime]     TIME(0)      NOT NULL,   -- e.g. 07:00:00
         [ShiftEndTime]       TIME(0)      NOT NULL,   -- e.g. 15:00:00
         [BreakMinutes]       INT          NOT NULL CONSTRAINT [DF_ShiftPattern_BreakMin] DEFAULT 0,
@@ -237,11 +239,12 @@ BEGIN
         CONSTRAINT [CK_ShiftPattern_DayOfWeek]    CHECK ([DayOfWeek] BETWEEN 0 AND 6),
         CONSTRAINT [CK_ShiftPattern_BreakMinutes] CHECK ([BreakMinutes] >= 0),
         CONSTRAINT [CK_ShiftPattern_Times]
-            CHECK ([ShiftEndTime] > [ShiftStartTime]),
+            CHECK ([ShiftEndTime] > [ShiftStartTime]),  -- overnight shifts are split at midnight so each portion is valid
 
-        -- One shift pattern row per day per template
-        CONSTRAINT [UX_ShiftPattern_DayPerTemplate]
-            UNIQUE ([ScheduleTemplateId], [DayOfWeek])
+        -- One shift pattern row per (day, sequence) per template
+        -- Sequence 1 = normal/start portion, Sequence 2 = post-midnight continuation of an overnight shift
+        CONSTRAINT [UX_ShiftPattern_DaySeqPerTemplate]
+            UNIQUE ([ScheduleTemplateId], [DayOfWeek], [ShiftSequence])
     );
 
     PRINT 'Created table: ScheduleShiftPattern';

@@ -25,5 +25,7 @@ public partial class ScheduleShiftPattern
 
     public DateTime LastUpdatedUtc { get; set; }
 
+    public byte ShiftSequence { get; set; }
+
     public virtual ScheduleTemplate ScheduleTemplate { get; set; }
 }

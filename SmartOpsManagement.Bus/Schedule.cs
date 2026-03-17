@@ -99,11 +99,22 @@ public partial class SmartOpsBusinessLogic
 
         foreach (var group in employeeGroups)
         {
-            var adLogin    = group.Key;
-            var firstShift = group.OrderByDescending(e => e.ShiftStart).First();
+            var adLogin = group.Key;
 
-            // Build the canonical pattern from the most recent week's data
-            var extracted = ExtractPattern(firstShift);
+            // Group this employee's shifts by ISO week (Monday = week start),
+            // then take the most recent week.  This handles both per-day Etime
+            // exports (5 rows/week) and per-week exports (1 row/week) correctly.
+            var mostRecentWeek = group
+                .GroupBy(e => MondayOf(e.ShiftStart))
+                .OrderByDescending(w => w.Key)
+                .First()
+                .OrderBy(e => e.ShiftStart)
+                .ToList();
+
+            var firstShift = mostRecentWeek.First();   // representative for FileNumber / PayGroup
+
+            // Build the canonical pattern from every record in that week
+            var extracted = ExtractPatternFromWeek(mostRecentWeek);
 
             // Load existing active template with its patterns
             var existing = _context.ScheduleTemplates
@@ -168,47 +179,50 @@ public partial class SmartOpsBusinessLogic
 
         while (day <= endDate)
         {
-            var dow     = (byte)day.DayOfWeek;
-            var pattern = template.ScheduleShiftPatterns.FirstOrDefault(p => p.DayOfWeek == dow);
+            var dow         = (byte)day.DayOfWeek;
+            var isException = exceptions.Any(e => e.StartDate <= day && e.EndDate >= day);
+            var patterns    = template.ScheduleShiftPatterns
+                                      .Where(p => p.DayOfWeek == dow)
+                                      .OrderBy(p => p.ShiftSequence);
 
-            if (pattern != null)
+            foreach (var pattern in patterns)
             {
-                var isException = exceptions.Any(e => e.StartDate <= day && e.EndDate >= day);
+                if (isException) break;
 
-                if (!isException)
+                // Overnight continuation (sequence 2): the "day" it belongs to is
+                // the previous calendar day's night, so advance the end to next day
+                // only for display purposes — the stored times are already correct.
+                var shiftStart = day.ToDateTime(pattern.ShiftStartTime);
+                var shiftEnd   = day.ToDateTime(pattern.ShiftEndTime);
+
+                var status = shiftEnd < now
+                    ? ShiftStatus.Completed
+                    : shiftStart <= now && shiftEnd >= now
+                        ? ShiftStatus.InProgress
+                        : ShiftStatus.Scheduled;
+
+                var shift = new ScheduledShift
                 {
-                    var shiftStart = day.ToDateTime(pattern.ShiftStartTime);
-                    var shiftEnd   = day.ToDateTime(pattern.ShiftEndTime);
+                    EmployeeId = adLogin,
+                    Division   = template.PayGroup,
+                    StartTime  = shiftStart,
+                    EndTime    = shiftEnd,
+                    Status     = status
+                };
 
-                    var status = shiftEnd < now
-                        ? ShiftStatus.Completed
-                        : shiftStart <= now && shiftEnd >= now
-                            ? ShiftStatus.InProgress
-                            : ShiftStatus.Scheduled;
-
-                    var shift = new ScheduledShift
+                if (pattern.BreakMinutes > 0)
+                {
+                    var breakStart = shiftStart.AddHours(4);
+                    shift.Breaks.Add(new ScheduledBreak
                     {
-                        EmployeeId = adLogin,
-                        Division   = template.PayGroup,
-                        StartTime  = shiftStart,
-                        EndTime    = shiftEnd,
-                        Status     = status
-                    };
-
-                    if (pattern.BreakMinutes > 0)
-                    {
-                        var breakStart = shiftStart.AddHours(4);
-                        shift.Breaks.Add(new ScheduledBreak
-                        {
-                            StartTime = breakStart,
-                            EndTime   = breakStart.AddMinutes(pattern.BreakMinutes),
-                            BreakType = "Break",
-                            IsPaid    = false
-                        });
-                    }
-
-                    shifts.Add(shift);
+                        StartTime = breakStart,
+                        EndTime   = breakStart.AddMinutes(pattern.BreakMinutes),
+                        BreakType = "Break",
+                        IsPaid    = false
+                    });
                 }
+
+                shifts.Add(shift);
             }
 
             day = day.AddDays(1);
@@ -259,33 +273,114 @@ public partial class SmartOpsBusinessLogic
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Extracts the day-of-week pattern from one EtimeShift week row.
-    /// Working days = every weekday between ShiftStart.Date and ShiftEnd.Date.
-    /// All working days share the same start/end time from the row.
-    /// Break minutes are divided evenly across working days.
+    /// Extracts the day-of-week pattern from one EtimeShift row.
+    ///
+    /// Three cases based on ShiftStart/ShiftEnd:
+    ///
+    ///  1. Day shift (endTime &gt; startTime, or endTime == 00:00 meaning "ends at midnight"):
+    ///     One pattern row per working weekday in [ShiftStart.Date, ShiftEnd.Date), sequence 1.
+    ///     A midnight-ending shift (ShiftEnd stored as next-day 00:00) is treated as ending at
+    ///     23:59:59 on the start day — all work hours belong to the start day.
+    ///
+    ///  2. True overnight (ShiftEnd.Date &gt; ShiftStart.Date and endTime != 00:00):
+    ///     Split at midnight.
+    ///     ShiftStart.Date → ShiftEnd.Date-1  = "start nights"  (startTime → 23:59:59, sequence 1)
+    ///     ShiftStart.Date+1 → ShiftEnd.Date  = "continuations" (00:00:00 → endTime,   sequence 2)
     /// </summary>
     private static List<ShiftPatternEntry> ExtractPattern(EtimeShift shift)
     {
         var startTime = TimeOnly.FromDateTime(shift.ShiftStart);
         var endTime   = TimeOnly.FromDateTime(shift.ShiftEnd);
+        var endOfDay  = new TimeOnly(23, 59, 59);
 
-        var workDays = new List<byte>();
-        var day = shift.ShiftStart.Date;
-        while (day <= shift.ShiftEnd.Date)
+        // ── Midnight-ending shift ─────────────────────────────────────────────
+        // ShiftEnd is stored as the next calendar day at 00:00 (e.g. Mon 07:00 → Tue 00:00).
+        // All hours belong to the start day; no continuation on the next day.
+        // Normalise endTime to 23:59:59 so it satisfies ShiftEndTime > ShiftStartTime.
+        if (endTime == TimeOnly.MinValue && shift.ShiftEnd.Date > shift.ShiftStart.Date)
         {
-            var dow = (byte)day.DayOfWeek;
-            if (dow != 0 && dow != 6)   // exclude Sunday=0, Saturday=6
-                workDays.Add(dow);
-            day = day.AddDays(1);
+            endTime = endOfDay;
+            var workDaysMid  = WeekdaysBetween(shift.ShiftStart.Date, shift.ShiftStart.Date);
+            var breakMid     = workDaysMid.Count > 0 ? shift.BreakMin / workDaysMid.Count : 0;
+            return workDaysMid
+                .Distinct().OrderBy(d => d)
+                .Select(d => new ShiftPatternEntry(d, startTime, endTime, breakMid, shift.PayCode, 1))
+                .ToList();
         }
 
-        var breakPerDay = workDays.Count > 0 ? shift.BreakMin / workDays.Count : 0;
+        // ── Zero-duration: bad Etime data — skip ─────────────────────────────
+        if (startTime == endTime)
+        {
+            Console.WriteLine(
+                $"[ExtractPattern] Skipping shift {shift.EtimeShiftId} for {shift.AdloginName}: " +
+                $"start and end time are identical ({startTime}).");
+            return new List<ShiftPatternEntry>();
+        }
 
-        return workDays
-            .Distinct()
-            .OrderBy(d => d)
-            .Select(d => new ShiftPatternEntry(d, startTime, endTime, breakPerDay, shift.PayCode))
+        // ── Day shift ─────────────────────────────────────────────────────────
+        if (endTime > startTime)
+        {
+            var workDays    = WeekdaysBetween(shift.ShiftStart.Date, shift.ShiftEnd.Date);
+            var breakPerDay = workDays.Count > 0 ? shift.BreakMin / workDays.Count : 0;
+            return workDays
+                .Distinct().OrderBy(d => d)
+                .Select(d => new ShiftPatternEntry(d, startTime, endTime, breakPerDay, shift.PayCode, 1))
+                .ToList();
+        }
+
+        // ── True overnight shift — split at midnight ──────────────────────────
+        // endTime < startTime and ShiftEnd is past the start day (e.g. Mon 22:00 → Tue 06:00).
+        // startNights : days the shift STARTS  (ShiftStart.Date up to but not including ShiftEnd.Date)
+        // contDays    : days the continuation ENDS (day after ShiftStart through ShiftEnd.Date)
+        var startOfDay  = TimeOnly.MinValue;  // 00:00:00
+
+        var startNights  = WeekdaysBetween(shift.ShiftStart.Date, shift.ShiftEnd.Date.AddDays(-1));
+        var contDays     = WeekdaysBetween(shift.ShiftStart.Date.AddDays(1), shift.ShiftEnd.Date);
+        var breakPerNight = startNights.Count > 0 ? shift.BreakMin / startNights.Count : 0;
+
+        var entries = new List<ShiftPatternEntry>();
+        foreach (var dow in startNights.Distinct().OrderBy(d => d))
+            entries.Add(new ShiftPatternEntry(dow, startTime, endOfDay, breakPerNight, shift.PayCode, 1));
+        foreach (var dow in contDays.Distinct().OrderBy(d => d))
+            entries.Add(new ShiftPatternEntry(dow, startOfDay, endTime, 0, shift.PayCode, 2));
+
+        return entries;
+    }
+
+    /// <summary>
+    /// Builds a shift pattern from all EtimeShift records in a single week.
+    /// Works correctly whether Etime exports one row per week or one row per day.
+    /// Each record contributes its own working days using ExtractPattern logic.
+    /// </summary>
+    private static List<ShiftPatternEntry> ExtractPatternFromWeek(List<EtimeShift> weekShifts)
+    {
+        var allEntries = weekShifts.SelectMany(ExtractPattern).ToList();
+
+        // Deduplicate: if two records produce the same (DayOfWeek, ShiftSequence) — which
+        // can happen if per-week and per-day records overlap — keep the first occurrence.
+        return allEntries
+            .GroupBy(e => (e.DayOfWeek, e.ShiftSequence))
+            .Select(g => g.First())
+            .OrderBy(e => e.DayOfWeek)
+            .ThenBy(e => e.ShiftSequence)
             .ToList();
+    }
+
+    /// <summary>Returns the Monday of the ISO week that contains <paramref name="d"/>.</summary>
+    private static DateTime MondayOf(DateTime d) =>
+        d.Date.AddDays(-(((int)d.DayOfWeek + 6) % 7));
+
+    /// <summary>Returns the DayOfWeek byte for every weekday (Mon–Fri) in [from, to].</summary>
+    private static List<byte> WeekdaysBetween(DateTime from, DateTime to)
+    {
+        var result = new List<byte>();
+        for (var d = from.Date; d <= to.Date; d = d.AddDays(1))
+        {
+            var dow = (byte)d.DayOfWeek;
+            if (dow != 0 && dow != 6)   // exclude Sunday=0, Saturday=6
+                result.Add(dow);
+        }
+        return result;
     }
 
     private static bool PatternsMatch(
@@ -296,10 +391,12 @@ public partial class SmartOpsBusinessLogic
 
         foreach (var e in extracted)
         {
-            var match = existing.FirstOrDefault(p => p.DayOfWeek == e.DayOfWeek);
-            if (match == null)                          return false;
-            if (match.ShiftStartTime != e.StartTime)   return false;
-            if (match.ShiftEndTime   != e.EndTime)     return false;
+            var match = existing.FirstOrDefault(p =>
+                p.DayOfWeek     == e.DayOfWeek  &&
+                p.ShiftSequence == e.ShiftSequence);
+            if (match == null)                        return false;
+            if (match.ShiftStartTime != e.StartTime) return false;
+            if (match.ShiftEndTime   != e.EndTime)   return false;
         }
         return true;
     }
@@ -330,6 +427,7 @@ public partial class SmartOpsBusinessLogic
             {
                 ScheduleTemplate = template,
                 DayOfWeek        = entry.DayOfWeek,
+                ShiftSequence    = entry.ShiftSequence,
                 ShiftStartTime   = entry.StartTime,
                 ShiftEndTime     = entry.EndTime,
                 BreakMinutes     = entry.BreakMinutes,
@@ -342,7 +440,7 @@ public partial class SmartOpsBusinessLogic
 
     private record ShiftPatternEntry(
         byte DayOfWeek, TimeOnly StartTime, TimeOnly EndTime,
-        int BreakMinutes, string? PayCode);
+        int BreakMinutes, string? PayCode, byte ShiftSequence);
 }
 
 /// <summary>

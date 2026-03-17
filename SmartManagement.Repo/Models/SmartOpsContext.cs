@@ -143,7 +143,7 @@ public partial class SmartOpsContext : DbContext
 
             entity.ToTable("ScheduleShiftPattern");
 
-            entity.HasIndex(e => new { e.ScheduleTemplateId, e.DayOfWeek }, "UX_ShiftPattern_DayPerTemplate").IsUnique();
+            entity.HasIndex(e => new { e.ScheduleTemplateId, e.DayOfWeek, e.ShiftSequence }, "UX_ShiftPattern_DaySeqPerTemplate").IsUnique();
 
             entity.Property(e => e.InsertedDateUtc)
                 .HasDefaultValueSql("(getutcdate())", "DF_ShiftPattern_Inserted")
@@ -153,6 +153,7 @@ public partial class SmartOpsContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.PayCode).HasMaxLength(50);
             entity.Property(e => e.ShiftEndTime).HasPrecision(0);
+            entity.Property(e => e.ShiftSequence).HasDefaultValue((byte)1, "DF_ShiftPattern_Sequence");
             entity.Property(e => e.ShiftStartTime).HasPrecision(0);
 
             entity.HasOne(d => d.ScheduleTemplate).WithMany(p => p.ScheduleShiftPatterns)

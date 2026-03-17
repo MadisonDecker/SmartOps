@@ -20,7 +20,7 @@
                     @if (nextShift != null)
                     {
                         <p class="mb-1"><strong>@nextShift.Division</strong></p>
-                        <p class="mb-1">@nextShift.StartTime:HH:mm - @nextShift.EndTime:HH:mm</p>
+                        <p class="mb-1">@nextShift.StartTime.ToString("HH:mm") – @nextShift.EndTime.ToString("HH:mm")</p>
                         <p class="text-muted">@((nextShift.StartTime - DateTime.Now).TotalHours > 0 ? $"In {Math.Floor((nextShift.StartTime - DateTime.Now).TotalHours)} hours" : "Today")</p>
                     }
                     else
