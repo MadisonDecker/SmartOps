@@ -166,4 +166,35 @@ public class ShiftDataService : IShiftDataService
             return 0;
         }
     }
+
+    public async Task<List<TimeOffRequestDto>> GetTimeOffRequestsAsync(string employeeId)
+    {
+        try
+        {
+            var client = CreateClient();
+            var resp = await client.GetAsync($"api/timeoff/employee/{Uri.EscapeDataString(employeeId)}");
+            if (!resp.IsSuccessStatusCode) return new List<TimeOffRequestDto>();
+            var requests = await resp.Content.ReadFromJsonAsync<List<TimeOffRequestDto>>();
+            return requests ?? new List<TimeOffRequestDto>();
+        }
+        catch
+        {
+            return new List<TimeOffRequestDto>();
+        }
+    }
+
+    public async Task<TimeOffRequestDto?> SubmitTimeOffRequestAsync(TimeOffRequestDto request)
+    {
+        try
+        {
+            var client = CreateClient();
+            var resp = await client.PostAsJsonAsync("api/timeoff/", request);
+            if (!resp.IsSuccessStatusCode) return null;
+            return await resp.Content.ReadFromJsonAsync<TimeOffRequestDto>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

@@ -23,6 +23,10 @@ public partial class SmartOpsContext : DbContext
 
     public virtual DbSet<ShiftBreak> ShiftBreaks { get; set; }
 
+    public virtual DbSet<TimeOffRequest> TimeOffRequests { get; set; }
+
+    public virtual DbSet<TimeOffRequestStatus> TimeOffRequestStatuses { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EtimeShift>(entity =>
@@ -110,6 +114,68 @@ public partial class SmartOpsContext : DbContext
                 .HasForeignKey(d => d.ScheduleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ShiftBreaks_Schedules");
+        });
+
+        modelBuilder.Entity<TimeOffRequest>(entity =>
+        {
+            entity.ToTable("TimeOffRequest");
+
+            entity.HasIndex(e => new { e.AdloginName, e.StatusId }, "IX_TimeOffRequest_AdloginName_StatusId");
+
+            entity.HasIndex(e => new { e.StatusId, e.ShiftStart }, "IX_TimeOffRequest_StatusId_ShiftStart");
+
+            entity.HasIndex(e => new { e.EtimeShiftId, e.AdloginName }, "UX_TimeOffRequest_ShiftId_AdloginName_Active")
+                .IsUnique()
+                .HasFilter("([StatusId]<>(3) AND [StatusId]<>(4))");
+
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Reason)
+                .IsRequired()
+                .HasMaxLength(500);
+            entity.Property(e => e.RequestedOn)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ReviewNotes).HasMaxLength(500);
+            entity.Property(e => e.ReviewedBy).HasMaxLength(100);
+            entity.Property(e => e.ReviewedOn).HasColumnType("datetime");
+            entity.Property(e => e.ScheduleUpdatedBy).HasMaxLength(100);
+            entity.Property(e => e.ScheduleUpdatedOn).HasColumnType("datetime");
+            entity.Property(e => e.ShiftEnd).HasColumnType("datetime");
+            entity.Property(e => e.ShiftStart).HasColumnType("datetime");
+            entity.Property(e => e.StatusId).HasDefaultValue((byte)1);
+            entity.Property(e => e.Timestamp)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+
+            entity.HasOne(d => d.EtimeShift).WithMany(p => p.TimeOffRequests)
+                .HasForeignKey(d => d.EtimeShiftId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TimeOffRequest_EtimeShift");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.TimeOffRequests)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TimeOffRequest_Status");
+        });
+
+        modelBuilder.Entity<TimeOffRequestStatus>(entity =>
+        {
+            entity.HasKey(e => e.StatusId);
+
+            entity.ToTable("TimeOffRequestStatus");
+
+            entity.Property(e => e.StatusName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

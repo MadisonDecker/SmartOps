@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using SmartShift.Blazor.Services;
 using SmartOps.Models;
+using TimeOffStatus = SmartOps.Models.TimeOffStatus;
 
 namespace SmartShift.Blazor.Components.Pages;
 
@@ -12,6 +13,13 @@ public partial class EmployeeSchedule
     private decimal weeklyHours;
     private DateTime weekStart;
     private string? currentUserId;
+
+    // Time-off request state
+    private bool showTimeOffModal;
+    private ScheduledShift? selectedShift;
+    private string timeOffReason = string.Empty;
+    private string timeOffError = string.Empty;
+    private List<TimeOffRequestDto> timeOffRequests = new();
 
     [Inject]
     private IShiftDataService ShiftDataService { get; set; } = null!;
@@ -50,6 +58,9 @@ public partial class EmployeeSchedule
             nextShift = await ShiftDataService.GetNextShiftAsync(currentUserId);
             weeklyHours = (decimal)await ShiftDataService.GetWeeklyHoursAsync(currentUserId, weekStart);
         }
+
+        // Reload requests so the action column reflects current database state
+        timeOffRequests = await ShiftDataService.GetTimeOffRequestsAsync(currentUserId!);
     }
 
     private async Task PreviousWeek()
@@ -72,6 +83,61 @@ public partial class EmployeeSchedule
         ShiftStatus.Cancelled => "bg-danger",
         _ => "bg-secondary"
     };
+
+    // Returns the active (non-denied, non-cancelled) request for a shift, if one exists.
+    private TimeOffRequestDto? GetActiveRequest(ScheduledShift shift) =>
+        timeOffRequests.FirstOrDefault(r =>
+            r.EtimeShiftId == shift.Id &&
+            r.Status != TimeOffStatus.Denied &&
+            r.Status != TimeOffStatus.Cancelled);
+
+    // A shift is eligible for a new request only if it is more than 7 days out
+    // and has no active (Pending/Approved) request already.
+    private bool CanRequestTimeOff(ScheduledShift shift) =>
+        shift.StartTime.Date > DateTime.Today.AddDays(7) &&
+        GetActiveRequest(shift) == null;
+
+    private void OpenTimeOffModal(ScheduledShift shift)
+    {
+        selectedShift = shift;
+        timeOffReason = string.Empty;
+        timeOffError = string.Empty;
+        showTimeOffModal = true;
+    }
+
+    private void CloseTimeOffModal()
+    {
+        showTimeOffModal = false;
+        selectedShift = null;
+    }
+
+    private async Task SubmitTimeOffRequest()
+    {
+        if (string.IsNullOrWhiteSpace(timeOffReason))
+        {
+            timeOffError = "Please enter a reason for your request.";
+            return;
+        }
+
+        var dto = new TimeOffRequestDto
+        {
+            AdloginName  = currentUserId!,
+            EtimeShiftId = selectedShift!.Id,
+            ShiftStart   = selectedShift.StartTime,
+            ShiftEnd     = selectedShift.EndTime,
+            Reason       = timeOffReason.Trim()
+        };
+
+        var result = await ShiftDataService.SubmitTimeOffRequestAsync(dto);
+        if (result == null)
+        {
+            timeOffError = "Failed to submit request. Please try again.";
+            return;
+        }
+
+        timeOffRequests.Add(result);
+        CloseTimeOffModal();
+    }
 
     private static string? ExtractLocalUsername(string? identityName)
     {

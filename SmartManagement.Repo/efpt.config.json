@@ -37,6 +37,14 @@
       {
          "Name": "[dbo].[Shifts]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TimeOffRequest]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TimeOffRequestStatus]",
+         "ObjectType": 0
       }
    ],
    "UiHint": null,

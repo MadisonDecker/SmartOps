@@ -150,6 +150,7 @@ public static class ScheduleEndpoints
 
         var shift = new ScheduledShift
         {
+            Id = s.EtimeShiftId,
             EmployeeId = employeeId,
             Division = s.PayGroup ?? string.Empty,
             StartTime = s.ShiftStart,

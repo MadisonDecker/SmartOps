@@ -27,7 +27,8 @@ app.MapControllers();
 // Map minimal API endpoints
 app.MapWeeklyStaffingMetricsEndpoints();
 app.MapLineAdherenceEndpoints();
-app.MapScheduleEndpoints(); // Registered Schedule endpoints here
+app.MapScheduleEndpoints();
+app.MapTimeOffRequestEndpoints();
 
 // Add this line to map OpenAPI endpoints
 if (app.Environment.IsDevelopment())

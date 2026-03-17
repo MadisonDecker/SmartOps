@@ -9,4 +9,6 @@ public interface IShiftDataService
     Task<List<EmployeeSkill>> GetEmployeeSkillsAsync(string employeeId);
     Task<ScheduledShift?> GetNextShiftAsync(string employeeId);
     Task<double> GetWeeklyHoursAsync(string employeeId, DateTime weekStart);
+    Task<List<TimeOffRequestDto>> GetTimeOffRequestsAsync(string employeeId);
+    Task<TimeOffRequestDto?> SubmitTimeOffRequestAsync(TimeOffRequestDto request);
 }
