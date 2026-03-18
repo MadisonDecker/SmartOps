@@ -3,9 +3,10 @@ using SmartOps.Models;
 namespace SmartOps.Blazor.Services;
 
 /// <summary>
-/// Service interface for retrieving staffing metrics from the Web API.
+/// Service interface for retrieving SmartOps data from the Web API.
+/// All UI data requests should go through this service.
 /// </summary>
-public interface IStaffingMetricsService
+public interface ISmartOpsDataService
 {
     /// <summary>
     /// Gets the weekly staffing metrics for the specified week and optional filters.
@@ -18,4 +19,10 @@ public interface IStaffingMetricsService
         DateTime weekStart,
         IEnumerable<int>? workgroupIds = null,
         int? clientId = null);
+
+    Task<List<Workgroup>> GetWorkGroupsAsync();
+
+    Task<WorkGroupMemberDto?> AddWorkGroupMemberAsync(int workGroupId, string adloginName, string addedBy);
+
+    Task<bool> RemoveWorkGroupMemberAsync(int workGroupId, string adloginName, string removedBy);
 }

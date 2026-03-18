@@ -17,6 +17,8 @@
 --                                       TimeOffRequest)
 --   9.  FK: TimeOffRequest → ScheduleException  (added last
 --          to resolve the circular reference)
+--  10.  WorkGroup                 (no inbound FKs)
+--  11.  WorkGroupMember           (FK → WorkGroup; AD login as employee key)
 -- ============================================================
 
 USE [SmartOps]
@@ -397,6 +399,88 @@ ELSE
 GO
 
 -- ============================================================
+-- 10. WorkGroup
+--     A named group used to organize employees (e.g. a team,
+--     queue, or unit).  IsActive allows soft-deletion.
+-- ============================================================
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables
+    WHERE name = 'WorkGroup' AND schema_id = SCHEMA_ID('dbo')
+)
+BEGIN
+    CREATE TABLE [dbo].[WorkGroup] (
+        [WorkGroupId]     INT            NOT NULL IDENTITY(1,1),
+        [Name]            NVARCHAR(100)  NOT NULL,
+        [Description]     NVARCHAR(500)  NULL,
+        [IsActive]        BIT            NOT NULL CONSTRAINT [DF_WorkGroup_IsActive] DEFAULT 1,
+        [InsertedDateUtc] DATETIME       NOT NULL CONSTRAINT [DF_WorkGroup_Inserted]  DEFAULT GETUTCDATE(),
+        [LastUpdatedUtc]  DATETIME       NOT NULL CONSTRAINT [DF_WorkGroup_Updated]   DEFAULT GETUTCDATE(),
+
+        CONSTRAINT [PK_WorkGroup]      PRIMARY KEY ([WorkGroupId]),
+        CONSTRAINT [UX_WorkGroup_Name] UNIQUE ([Name])
+    );
+
+    PRINT 'Created table: WorkGroup';
+END
+ELSE
+    PRINT 'Skipped: WorkGroup already exists';
+GO
+
+-- ============================================================
+-- 11. WorkGroupMember
+--     Lookup table: which employees belong to which WorkGroup.
+--     AdloginName is the employee's AD account (same key used
+--     throughout EtimeShifts, ScheduleTemplate, etc.).
+--     A member row can be soft-removed via RemovedDateUtc
+--     without losing history.
+-- ============================================================
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables
+    WHERE name = 'WorkGroupMember' AND schema_id = SCHEMA_ID('dbo')
+)
+BEGIN
+    CREATE TABLE [dbo].[WorkGroupMember] (
+        [WorkGroupMemberId] INT            NOT NULL IDENTITY(1,1),
+        [WorkGroupId]       INT            NOT NULL,
+        [AdloginName]       NVARCHAR(100)  NOT NULL,
+        [AddedDateUtc]      DATETIME       NOT NULL CONSTRAINT [DF_WorkGroupMember_Added]   DEFAULT GETUTCDATE(),
+        [RemovedDateUtc]    DATETIME       NULL,       -- NULL = currently active member
+        [AddedBy]           NVARCHAR(100)  NOT NULL,
+        [RemovedBy]         NVARCHAR(100)  NULL,
+
+        CONSTRAINT [PK_WorkGroupMember]        PRIMARY KEY ([WorkGroupMemberId]),
+        CONSTRAINT [FK_WorkGroupMember_Group]  FOREIGN KEY ([WorkGroupId])
+            REFERENCES [dbo].[WorkGroup] ([WorkGroupId])
+            ON DELETE CASCADE
+    );
+
+    -- An employee may only have one active membership per group at a time
+    -- (filtered index; cannot be expressed as an inline CONSTRAINT in T-SQL)
+    CREATE UNIQUE INDEX [UX_WorkGroupMember_ActivePerGroup]
+        ON [dbo].[WorkGroupMember] ([WorkGroupId], [AdloginName])
+        WHERE [RemovedDateUtc] IS NULL;
+
+    -- Lookup: all active members of a group
+    CREATE INDEX [IX_WorkGroupMember_WorkGroupId_Active]
+        ON [dbo].[WorkGroupMember] ([WorkGroupId])
+        INCLUDE ([AdloginName], [AddedDateUtc])
+        WHERE [RemovedDateUtc] IS NULL;
+
+    -- Lookup: all groups an employee belongs to
+    CREATE INDEX [IX_WorkGroupMember_AdloginName_Active]
+        ON [dbo].[WorkGroupMember] ([AdloginName])
+        INCLUDE ([WorkGroupId], [AddedDateUtc])
+        WHERE [RemovedDateUtc] IS NULL;
+
+    PRINT 'Created table: WorkGroupMember';
+END
+ELSE
+    PRINT 'Skipped: WorkGroupMember already exists';
+GO
+
+-- ============================================================
 -- Verification: show all tables and column counts
 -- ============================================================
 
@@ -421,7 +505,8 @@ WHERE t.schema_id = SCHEMA_ID('dbo')
       'EtimeShifts', 'LineAdherence',
       'TimeOffRequestStatus', 'ScheduleExceptionType',
       'ScheduleTemplate', 'ScheduleShiftPattern',
-      'TimeOffRequest', 'ScheduleException'
+      'TimeOffRequest', 'ScheduleException',
+      'WorkGroup', 'WorkGroupMember'
   )
 GROUP BY t.name, t.object_id
 ORDER BY t.name;

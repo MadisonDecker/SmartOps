@@ -28,15 +28,15 @@
         </div>
         <div class="col-md-3">
             <label class="form-label">Workgroups</label>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
-                        data-bs-toggle="dropdown" aria-expanded="false" id="workgroupDropdown">
+            <div class="dropdown @(workgroupDropdownOpen ? "show" : "")">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button"
+                        @onclick="ToggleWorkgroupDropdown">
                     @GetWorkgroupSelectionText()
                 </button>
-                <ul class="dropdown-menu w-100 p-2" aria-labelledby="workgroupDropdown" style="max-height: 300px; overflow-y: auto;">
+                <ul class="dropdown-menu w-100 p-2 @(workgroupDropdownOpen ? "show" : "")" style="max-height: 300px; overflow-y: auto;">
                     <li>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAllWorkgroups" 
+                            <input class="form-check-input" type="checkbox" id="selectAllWorkgroups"
                                    checked="@(selectedWorkgroups.Count == workgroups.Count && workgroups.Count > 0)"
                                    @onchange="OnSelectAllWorkgroupsChanged" />
                             <label class="form-check-label fw-bold" for="selectAllWorkgroups">Select All</label>
@@ -47,10 +47,10 @@
                     {
                         <li>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="wg_@workgroup.Code" 
+                                <input class="form-check-input" type="checkbox" id="wg_@workgroup.Id"
                                        checked="@selectedWorkgroups.Any(w => w.Id == workgroup.Id)"
                                        @onchange="@(e => OnWorkgroupToggled(workgroup, e))" />
-                                <label class="form-check-label" for="wg_@workgroup.Code">@workgroup.Name</label>
+                                <label class="form-check-label" for="wg_@workgroup.Id">@workgroup.Name</label>
                             </div>
                         </li>
                     }

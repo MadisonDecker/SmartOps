@@ -35,4 +35,9 @@ public class Workgroup
     /// Navigation property for clients associated with this workgroup.
     /// </summary>
     public List<Client> Clients { get; set; } = [];
+
+    /// <summary>
+    /// Active members of this workgroup.
+    /// </summary>
+    public List<WorkGroupMemberDto> Members { get; set; } = [];
 }

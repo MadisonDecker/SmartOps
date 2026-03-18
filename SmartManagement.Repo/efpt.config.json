@@ -53,6 +53,10 @@
       {
          "Name": "[dbo].[TimeOffRequestStatus]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Workgroup]",
+         "ObjectType": 0
       }
    ],
    "UiHint": null,

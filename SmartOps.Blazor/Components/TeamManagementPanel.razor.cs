@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using SmartOps.Blazor.Services;
 using SmartOps.Models;
 
 namespace SmartOps.Blazor.Components;
@@ -11,64 +13,103 @@ public partial class TeamManagementPanel
     [Parameter]
     public Client? SelectedClient { get; set; }
 
-    private List<EmployeeInfo>? allEmployees;
-    private List<EmployeeInfo>? filteredEmployees;
+    [Inject]
+    private ISmartOpsDataService SmartOpsDataService { get; set; } = null!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+    // All members across selected workgroups, flat list for display
+    private List<(Workgroup Group, WorkGroupMemberDto Member)> allMembers = [];
+    private List<(Workgroup Group, WorkGroupMemberDto Member)> filteredMembers = [];
     private string searchTerm = "";
-    private string selectedSkill = "";
-    private List<string> availableSkills = [];
+
+    // Add-member form state
+    private bool showAddForm = false;
+    private int addToWorkGroupId;
+    private string newMemberLogin = "";
+    private string addError = "";
+
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.Identity?.Name ?? "system";
+    }
 
     protected override async Task OnParametersSetAsync()
     {
         if (SelectedWorkgroups.Count > 0)
-        {
-            await LoadTeamMembers();
-        }
+            await LoadMembers();
+        else
+            allMembers.Clear();
+
+        ApplyFilters();
     }
 
-    private async Task LoadTeamMembers()
+    private async Task LoadMembers()
     {
-        // TODO: Call IEmployeeService.GetEmployeesByWorkgroupsAsync(SelectedWorkgroups)
-        allEmployees = [];
-        availableSkills = ["BILINGUAL_ES", "TIER2", "VOICE_QUALITY"];
-        ApplyFilters();
+        allMembers = SelectedWorkgroups
+            .SelectMany(g => g.Members.Select(m => (g, m)))
+            .ToList();
+
         await Task.CompletedTask;
-    }
-
-    private void OnSearchChange()
-    {
-        ApplyFilters();
-    }
-
-    private void OnSkillFilterChange(ChangeEventArgs e)
-    {
-        selectedSkill = e.Value?.ToString() ?? "";
-        ApplyFilters();
     }
 
     private void ApplyFilters()
     {
-        if (allEmployees == null)
+        filteredMembers = string.IsNullOrWhiteSpace(searchTerm)
+            ? [.. allMembers]
+            : allMembers
+                .Where(x => x.Member.AdloginName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+    }
+
+    private void OpenAddForm(int workGroupId)
+    {
+        addToWorkGroupId = workGroupId;
+        newMemberLogin   = "";
+        addError         = "";
+        showAddForm      = true;
+    }
+
+    private void CancelAddForm()
+    {
+        showAddForm = false;
+    }
+
+    private async Task SubmitAddMember()
+    {
+        if (string.IsNullOrWhiteSpace(newMemberLogin))
+        {
+            addError = "AD login name is required.";
             return;
+        }
 
-        filteredEmployees = allEmployees.Where(e =>
-            (string.IsNullOrEmpty(searchTerm) || e.EmployeeId.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(selectedSkill) || e.Skills.Any(s => s.SkillCode == selectedSkill))
-        ).ToList();
+        var result = await SmartOpsDataService.AddWorkGroupMemberAsync(addToWorkGroupId, newMemberLogin.Trim(), currentUserId!);
+        if (result == null)
+        {
+            addError = "Failed to add member. The employee may already be in this workgroup.";
+            return;
+        }
+
+        // Update the in-memory list so the UI reflects the change immediately
+        var group = SelectedWorkgroups.First(g => g.Id == addToWorkGroupId);
+        group.Members.Add(result);
+        showAddForm = false;
+        await LoadMembers();
+        ApplyFilters();
     }
 
-    private static decimal GetEmployeeWeeklyHours(string employeeId)
+    private async Task RemoveMember(int workGroupId, string adloginName)
     {
-        // TODO: Call IEmployeeService.GetEmployeeHoursAsync()
-        return 40;
-    }
+        var success = await SmartOpsDataService.RemoveWorkGroupMemberAsync(workGroupId, adloginName, currentUserId!);
+        if (!success) return;
 
-    private void ShowAssignShiftModal(string employeeId)
-    {
-        // TODO: Show modal for shift assignment
-    }
-
-    private void ShowDetailsModal(EmployeeInfo employee)
-    {
-        // TODO: Show employee details modal
+        var group = SelectedWorkgroups.First(g => g.Id == workGroupId);
+        group.Members.RemoveAll(m => m.AdloginName == adloginName);
+        await LoadMembers();
+        ApplyFilters();
     }
 }

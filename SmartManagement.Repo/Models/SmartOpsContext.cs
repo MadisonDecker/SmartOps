@@ -30,6 +30,10 @@ public partial class SmartOpsContext : DbContext
     public virtual DbSet<TimeOffRequest> TimeOffRequests { get; set; }
 
     public virtual DbSet<TimeOffRequestStatus> TimeOffRequestStatuses { get; set; }
+        
+    public virtual DbSet<WorkGroup> WorkGroups { get; set; }
+
+    public virtual DbSet<WorkGroupMember> WorkGroupMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -245,6 +249,61 @@ public partial class SmartOpsContext : DbContext
             entity.Property(e => e.StatusName)
                 .IsRequired()
                 .HasMaxLength(50);
+        });
+        
+        modelBuilder.Entity<WorkGroup>(entity =>
+        {
+            entity.HasKey(e => e.WorkGroupId);
+
+            entity.ToTable("WorkGroup");
+
+            entity.HasIndex(e => e.Name, "UX_WorkGroup_Name").IsUnique();
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true, "DF_WorkGroup_IsActive");
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroup_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroup_Updated")
+                .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<WorkGroupMember>(entity =>
+        {
+            entity.HasKey(e => e.WorkGroupMemberId);
+
+            entity.ToTable("WorkGroupMember");
+
+            entity.HasIndex(e => new { e.WorkGroupId, e.AdloginName }, "UX_WorkGroupMember_ActivePerGroup")
+                .IsUnique()
+                .HasFilter("[RemovedDateUtc] IS NULL");
+
+            entity.HasIndex(e => e.WorkGroupId, "IX_WorkGroupMember_WorkGroupId_Active")
+                .HasFilter("[RemovedDateUtc] IS NULL");
+
+            entity.HasIndex(e => e.AdloginName, "IX_WorkGroupMember_AdloginName_Active")
+                .HasFilter("[RemovedDateUtc] IS NULL");
+
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.AddedBy)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.RemovedBy).HasMaxLength(100);
+            entity.Property(e => e.AddedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroupMember_Added")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RemovedDateUtc).HasColumnType("datetime");
+
+            entity.HasOne(d => d.WorkGroup).WithMany(p => p.WorkGroupMembers)
+                .HasForeignKey(d => d.WorkGroupId)
+                .HasConstraintName("FK_WorkGroupMember_Group");
         });
 
         OnModelCreatingPartial(modelBuilder);

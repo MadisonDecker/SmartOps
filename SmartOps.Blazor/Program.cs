@@ -101,8 +101,8 @@ builder.Services.AddScoped<IClaimsTransformation, SmartOpsClaimsTransformation>(
 
 builder.Services.AddHttpContextAccessor();
 
-// Register Staffing Metrics service with HttpClient for Web API calls
-builder.Services.AddHttpClient<IStaffingMetricsService, StaffingMetricsService>(client =>
+// Register SmartOps data service with HttpClient for Web API calls
+builder.Services.AddHttpClient<ISmartOpsDataService, SmartOpsDataService>(client =>
 {
     var apiBaseUrl = builder.Configuration["SmartOpsApi:BaseUrl"] ?? "https://localhost:7249/";
     client.BaseAddress = new Uri(apiBaseUrl);

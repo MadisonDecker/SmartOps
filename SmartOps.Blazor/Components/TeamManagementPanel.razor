@@ -1,7 +1,7 @@
 @using SmartOps.Models
 
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Team Management</h5>
     </div>
     <div class="card-body">
@@ -15,82 +15,89 @@
         {
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <input type="text" class="form-control" placeholder="Search by name..." @bind="searchTerm" @onkeyup="OnSearchChange" />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Filter by Skill:</label>
-                    <select class="form-select" @bind="selectedSkill" @bind:event="onchange">
-                        <option value="">All Skills</option>
-                        @foreach (var skill in availableSkills)
-                        {
-                            <option value="@skill">@skill</option>
-                        }
-                    </select>
+                    <input type="text" class="form-control" placeholder="Search by AD login..."
+                           @bind="searchTerm" @bind:event="oninput" @bind:after="ApplyFilters" />
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Workgroup</th>
-                            <th>Status</th>
-                            <th>Skills</th>
-                            <th>This Week Hours</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (filteredEmployees != null)
-                        {
-                            @foreach (var emp in filteredEmployees)
-                            {
-                                <tr>
-                                    <td>@emp.EmployeeId</td>
-                                    <td>@emp.Division</td>
-                                    <td>
-                                        <span class="badge @(emp.IsActive ? "bg-success" : "bg-secondary")">
-                                            @(emp.IsActive ? "Active" : "Inactive")
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if (emp.Skills.Any())
-                                        {
-                                            @foreach (var skill in emp.Skills.Take(2))
-                                            {
-                                                <span class="badge bg-info">@skill.SkillCode</span>
-                                            }
-                                            @if (emp.Skills.Count > 2)
-                                            {
-                                                <span class="badge bg-secondary">+@(emp.Skills.Count - 2)</span>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-                                    <td>@GetEmployeeWeeklyHours(emp.EmployeeId)</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => ShowAssignShiftModal(emp.EmployeeId))">
-                                            Assign Shift
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" @onclick="@(() => ShowDetailsModal(emp))">
-                                            Details
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            @if (filteredEmployees == null || !filteredEmployees.Any())
+            @foreach (var group in SelectedWorkgroups)
             {
-                <div class="alert alert-info mt-3" role="alert">
-                    No employees found matching your filters.
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">@group.Name
+                            <span class="badge bg-secondary ms-1">@group.Members.Count members</span>
+                        </h6>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenAddForm(group.Id)">
+                            + Add Member
+                        </button>
+                    </div>
+
+                    @if (showAddForm && addToWorkGroupId == group.Id)
+                    {
+                        <div class="card card-body mb-2 bg-light">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label">AD Login Name</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           placeholder="e.g. jdoe" @bind="newMemberLogin" />
+                                </div>
+                                <div class="col-md-auto">
+                                    <button class="btn btn-sm btn-primary" @onclick="SubmitAddMember">Add</button>
+                                    <button class="btn btn-sm btn-secondary ms-1" @onclick="CancelAddForm">Cancel</button>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(addError))
+                            {
+                                <div class="text-danger small mt-1">@addError</div>
+                            }
+                        </div>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>AD Login</th>
+                                    <th>Added</th>
+                                    <th>Added By</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var groupMembers = filteredMembers
+                                        .Where(x => x.Group.Id == group.Id)
+                                        .Select(x => x.Member)
+                                        .ToList();
+                                }
+                                @if (groupMembers.Any())
+                                {
+                                    @foreach (var member in groupMembers)
+                                    {
+                                        <tr>
+                                            <td>@member.AdloginName</td>
+                                            <td>@member.AddedDateUtc.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                                            <td>@member.AddedBy</td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                        @onclick="() => RemoveMember(group.Id, member.AdloginName)">
+                                                    Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-muted text-center py-3">
+                                            @(string.IsNullOrWhiteSpace(searchTerm) ? "No members in this workgroup." : "No members match the search.")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             }
         }

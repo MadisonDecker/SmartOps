@@ -9,6 +9,7 @@ namespace SmartOps.Blazor.Components.Pages;
 public partial class SupervisorDashboard
 {
     protected string activeTab = "schedule";
+    private bool workgroupDropdownOpen = false;
     private List<Workgroup> selectedWorkgroups = [];
     private Client? selectedClient;
     private DateTime weekStart;
@@ -38,16 +39,7 @@ public partial class SupervisorDashboard
 
     private async Task LoadWorkgroups()
     {
-        // TODO: Call IStaffingRequirementService.GetWorkgroupsAsync()
-        workgroups =
-        [
-            new Workgroup { Id = 1, Code = "SALES", Name = "Sales" },
-            new Workgroup { Id = 2, Code = "SUPPORT", Name = "Support" },
-            new Workgroup { Id = 3, Code = "BILLING", Name = "Billing" },
-            new Workgroup { Id = 4, Code = "TECHNICAL", Name = "Technical" },
-            new Workgroup { Id = 5, Code = "CARE", Name = "Customer Care" }
-        ];
-        await Task.CompletedTask;
+        workgroups = await SmartOpsDataService.GetWorkGroupsAsync();
     }
 
     private async Task RefreshData()
@@ -70,7 +62,7 @@ public partial class SupervisorDashboard
 
         // Get staffing metrics from the service
         var workgroupIds = selectedWorkgroups.Select(w => w.Id);
-        staffingMetrics = await StaffingMetricsService.GetWeeklyMetricsAsync(
+        staffingMetrics = await SmartOpsDataService.GetWeeklyMetricsAsync(
             weekStart,
             workgroupIds.Any() ? workgroupIds : null,
             selectedClient?.Id);
@@ -85,6 +77,11 @@ public partial class SupervisorDashboard
     {
         weekStart = weekStart.AddDays(days);
         await RefreshData();
+    }
+
+    private void ToggleWorkgroupDropdown()
+    {
+        workgroupDropdownOpen = !workgroupDropdownOpen;
     }
 
     protected void SelectTab(string tabName)
@@ -160,5 +157,5 @@ public partial class SupervisorDashboard
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
     [Inject]
-    private IStaffingMetricsService StaffingMetricsService { get; set; } = null!;
+    private ISmartOpsDataService SmartOpsDataService { get; set; } = null!;
 }

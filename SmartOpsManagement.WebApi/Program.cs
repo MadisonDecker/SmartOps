@@ -29,6 +29,7 @@ app.MapWeeklyStaffingMetricsEndpoints();
 app.MapLineAdherenceEndpoints();
 app.MapScheduleEndpoints();
 app.MapTimeOffRequestEndpoints();
+app.MapWorkGroupEndpoints();
 
 // Add this line to map OpenAPI endpoints
 if (app.Environment.IsDevelopment())
