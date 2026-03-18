@@ -9,12 +9,14 @@ public class ShiftDataService : IShiftDataService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
+    private readonly IRunAsService _runAsService;
 
-    public ShiftDataService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+    public ShiftDataService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IRunAsService runAsService)
     {
         _httpClientFactory = httpClientFactory;
         _httpContextAccessor = httpContextAccessor;
         _configuration = configuration;
+        _runAsService = runAsService;
     }
 
     private HttpClient CreateClient()
@@ -31,6 +33,9 @@ public class ShiftDataService : IShiftDataService
 
     private string? GetUserIdentifierFromClaims()
     {
+        if (_runAsService.IsEnabled && !string.IsNullOrWhiteSpace(_runAsService.RunAsLogin))
+            return _runAsService.RunAsLogin.Trim();
+
         var user = _httpContextAccessor.HttpContext?.User;
         if (user == null) return null;
 

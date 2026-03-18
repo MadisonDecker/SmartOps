@@ -19,6 +19,9 @@ public partial class TeamManagementPanel
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
+    [Inject]
+    private IRunAsService RunAsService { get; set; } = null!;
+
     // All members across selected workgroups, flat list for display
     private List<(Workgroup Group, WorkGroupMemberDto Member)> allMembers = [];
     private List<(Workgroup Group, WorkGroupMemberDto Member)> filteredMembers = [];
@@ -30,12 +33,14 @@ public partial class TeamManagementPanel
     private string newMemberLogin = "";
     private string addError = "";
 
-    private string? currentUserId;
+    private string? _realUserId;
+
+    private string CurrentUserId => RunAsService.GetEffectiveLogin(_realUserId ?? "system");
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        currentUserId = authState.User?.Identity?.Name ?? "system";
+        _realUserId = authState.User?.Identity?.Name ?? "system";
     }
 
     protected override async Task OnParametersSetAsync()
@@ -87,7 +92,7 @@ public partial class TeamManagementPanel
             return;
         }
 
-        var result = await SmartOpsDataService.AddWorkGroupMemberAsync(addToWorkGroupId, newMemberLogin.Trim(), currentUserId!);
+        var result = await SmartOpsDataService.AddWorkGroupMemberAsync(addToWorkGroupId, newMemberLogin.Trim(), CurrentUserId);
         if (result == null)
         {
             addError = "Failed to add member. The employee may already be in this workgroup.";
@@ -104,7 +109,7 @@ public partial class TeamManagementPanel
 
     private async Task RemoveMember(int workGroupId, string adloginName)
     {
-        var success = await SmartOpsDataService.RemoveWorkGroupMemberAsync(workGroupId, adloginName, currentUserId!);
+        var success = await SmartOpsDataService.RemoveWorkGroupMemberAsync(workGroupId, adloginName, CurrentUserId);
         if (!success) return;
 
         var group = SelectedWorkgroups.First(g => g.Id == workGroupId);

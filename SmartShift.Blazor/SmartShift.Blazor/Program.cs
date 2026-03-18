@@ -42,6 +42,9 @@ builder.Services.Configure<RoleOptions>(
     builder.Configuration.GetSection(RoleOptions.SectionName));
 builder.Services.AddScoped<IClaimsTransformation, SmartShiftClaims>();
 
+// Run-as impersonation service (MadisonD only)
+builder.Services.AddScoped<IRunAsService, RunAsService>();
+
 // Replaceable real data service that proxies to SmartOps Web API
 builder.Services.AddScoped<IShiftDataService, ShiftDataService>();
 builder.Services.AddHttpContextAccessor();

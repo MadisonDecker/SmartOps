@@ -101,6 +101,9 @@ builder.Services.AddScoped<IClaimsTransformation, SmartOpsClaimsTransformation>(
 
 builder.Services.AddHttpContextAccessor();
 
+// Run-as impersonation service (MadisonD only)
+builder.Services.AddScoped<IRunAsService, RunAsService>();
+
 // Register SmartOps data service with HttpClient for Web API calls
 builder.Services.AddHttpClient<ISmartOpsDataService, SmartOpsDataService>(client =>
 {

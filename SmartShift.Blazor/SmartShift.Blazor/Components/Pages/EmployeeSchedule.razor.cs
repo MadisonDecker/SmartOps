@@ -6,12 +6,13 @@ using TimeOffStatus = SmartOps.Models.TimeOffStatus;
 
 namespace SmartShift.Blazor.Components.Pages;
 
-public partial class EmployeeSchedule
+public partial class EmployeeSchedule : IDisposable
 {
     private List<ScheduledShift>? shifts;
     private ScheduledShift? nextShift;
     private decimal weeklyHours;
     private DateTime weekStart;
+    private string? _realUserId;
     private string? currentUserId;
     private string? employeeDisplayName;
 
@@ -31,23 +32,37 @@ public partial class EmployeeSchedule
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
+    [Inject]
+    private IRunAsService RunAsService { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
-        // Get current user ID from authentication and normalize to AD username
+        RunAsService.OnRunAsChanged += OnRunAsChanged;
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var identityName = authState.User?.Identity?.Name;
-        currentUserId = ExtractLocalUsername(identityName);
-        employeeDisplayName = authState.User?.FindFirst("name")?.Value ?? currentUserId;
+        _realUserId = ExtractLocalUsername(identityName);
+        employeeDisplayName = authState.User?.FindFirst("name")?.Value ?? _realUserId;
 
-        if (currentUserId == null)
+        if (_realUserId == null)
         {
-            // Redirect to login
             NavigationManager.NavigateTo("/Account/Login");
             return;
         }
 
+        currentUserId = RunAsService.GetEffectiveLogin(_realUserId);
         weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
         await LoadSchedule();
+    }
+
+    private void OnRunAsChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            currentUserId = RunAsService.GetEffectiveLogin(_realUserId ?? string.Empty);
+            await LoadSchedule();
+            StateHasChanged();
+        });
     }
 
     private async Task LoadSchedule()
@@ -161,5 +176,9 @@ public partial class EmployeeSchedule
         // Otherwise return the original value
         return identityName;
     }
-}
 
+    public void Dispose()
+    {
+        RunAsService.OnRunAsChanged -= OnRunAsChanged;
+    }
+}
