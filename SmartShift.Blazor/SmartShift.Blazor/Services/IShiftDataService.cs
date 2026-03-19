@@ -11,4 +11,8 @@ public interface IShiftDataService
     Task<double> GetWeeklyHoursAsync(string employeeId, DateTime weekStart);
     Task<List<TimeOffRequestDto>> GetTimeOffRequestsAsync(string employeeId);
     Task<TimeOffRequestDto?> SubmitTimeOffRequestAsync(TimeOffRequestDto request);
+
+    Task<List<AlertContactMethodDto>> GetContactMethodsAsync();
+    Task<EmployeeAvailabilityDto?> GetAvailabilityAsync(string adLoginName);
+    Task<EmployeeAvailabilityDto?> SaveAvailabilityAsync(string adLoginName, EmployeeAvailabilityDto dto);
 }

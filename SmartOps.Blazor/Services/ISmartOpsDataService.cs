@@ -25,4 +25,10 @@ public interface ISmartOpsDataService
     Task<WorkGroupMemberDto?> AddWorkGroupMemberAsync(int workGroupId, string adloginName, string addedBy);
 
     Task<bool> RemoveWorkGroupMemberAsync(int workGroupId, string adloginName, string removedBy);
+
+    Task<List<TimeOffRequestDto>> GetTeamTimeOffRequestsAsync(IEnumerable<string> adLoginNames);
+
+    Task<TimeOffRequestDto?> ApproveTimeOffRequestAsync(int requestId, string reviewedBy, string? notes);
+
+    Task<TimeOffRequestDto?> DenyTimeOffRequestAsync(int requestId, string reviewedBy, string? notes);
 }

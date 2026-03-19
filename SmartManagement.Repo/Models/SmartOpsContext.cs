@@ -13,6 +13,12 @@ public partial class SmartOpsContext : DbContext
     {
     }
 
+    public virtual DbSet<AlertContactMethod> AlertContactMethods { get; set; }
+
+    public virtual DbSet<EmployeeAvailability> EmployeeAvailabilities { get; set; }
+
+    public virtual DbSet<EmployeeAvailabilityDay> EmployeeAvailabilityDays { get; set; }
+
     public virtual DbSet<EtimeShift> EtimeShifts { get; set; }
 
     public virtual DbSet<Latdetail> Latdetails { get; set; }
@@ -30,13 +36,85 @@ public partial class SmartOpsContext : DbContext
     public virtual DbSet<TimeOffRequest> TimeOffRequests { get; set; }
 
     public virtual DbSet<TimeOffRequestStatus> TimeOffRequestStatuses { get; set; }
-        
+
+    public virtual DbSet<VwCurrentEmployeeAvailability> VwCurrentEmployeeAvailabilities { get; set; }
+
     public virtual DbSet<WorkGroup> WorkGroups { get; set; }
 
     public virtual DbSet<WorkGroupMember> WorkGroupMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AlertContactMethod>(entity =>
+        {
+            entity.HasKey(e => e.ContactMethodId);
+
+            entity.ToTable("AlertContactMethod");
+
+            entity.Property(e => e.MethodName)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<EmployeeAvailability>(entity =>
+        {
+            entity.ToTable("EmployeeAvailability");
+
+            entity.HasIndex(e => new { e.AdloginName, e.EffectiveDate, e.EndDate }, "IX_EmployeeAvailability_AdloginName_Dates");
+
+            entity.HasIndex(e => new { e.IsOpenToOvertime, e.EffectiveDate, e.EndDate }, "IX_EmployeeAvailability_OT_Dates");
+
+            entity.HasIndex(e => new { e.IsOpenToVto, e.EffectiveDate, e.EndDate }, "IX_EmployeeAvailability_VTO_Dates");
+
+            entity.HasIndex(e => new { e.AdloginName, e.EffectiveDate }, "UX_EmployeeAvailability_LoginEffDate").IsUnique();
+
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.EffectiveDate).HasDefaultValueSql("(CONVERT([date],getutcdate()))", "DF_EmployeeAvailability_EffDate");
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_EmployeeAvailability_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_EmployeeAvailability_Updated")
+                .HasColumnType("datetime");
+            entity.Property(e => e.MaxWeeklyHours).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.MinWeeklyHours).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.PreferredAlertContactMethodId).HasDefaultValue((byte)1, "DF_EmployeeAvailability_AlertContact");
+            entity.Property(e => e.Timestamp)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+
+            entity.HasOne(d => d.PreferredAlertContactMethod).WithMany(p => p.EmployeeAvailabilities)
+                .HasForeignKey(d => d.PreferredAlertContactMethodId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_EmployeeAvailability_AlertContact");
+        });
+
+        modelBuilder.Entity<EmployeeAvailabilityDay>(entity =>
+        {
+            entity.ToTable("EmployeeAvailabilityDay");
+
+            entity.HasIndex(e => new { e.EmployeeAvailabilityId, e.DayOfWeek }, "IX_EmployeeAvailabilityDay_AvailabilityId");
+
+            entity.HasIndex(e => new { e.EmployeeAvailabilityId, e.DayOfWeek }, "UX_EmployeeAvailabilityDay_DayPerProfile").IsUnique();
+
+            entity.Property(e => e.EarliestStart).HasPrecision(0);
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_EmployeeAvailabilityDay_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_EmployeeAvailabilityDay_Updated")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LatestStop).HasPrecision(0);
+
+            entity.HasOne(d => d.EmployeeAvailability).WithMany(p => p.EmployeeAvailabilityDays)
+                .HasForeignKey(d => d.EmployeeAvailabilityId)
+                .HasConstraintName("FK_EmployeeAvailabilityDay_Availability");
+        });
+
         modelBuilder.Entity<EtimeShift>(entity =>
         {
             entity.HasIndex(e => new { e.AdloginName, e.ShiftStart }, "IX_EtimeShifts_ADLoginName_ShiftStart");
@@ -250,55 +328,65 @@ public partial class SmartOpsContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50);
         });
-        
-        modelBuilder.Entity<WorkGroup>(entity =>
+
+        modelBuilder.Entity<VwCurrentEmployeeAvailability>(entity =>
         {
-            entity.HasKey(e => e.WorkGroupId);
-
-            entity.ToTable("WorkGroup");
-
-            entity.HasIndex(e => e.Name, "UX_WorkGroup_Name").IsUnique();
-
-            entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-            entity.Property(e => e.Description).HasMaxLength(500);
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true, "DF_WorkGroup_IsActive");
-            entity.Property(e => e.InsertedDateUtc)
-                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroup_Inserted")
-                .HasColumnType("datetime");
-            entity.Property(e => e.LastUpdatedUtc)
-                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroup_Updated")
-                .HasColumnType("datetime");
-        });
-
-        modelBuilder.Entity<WorkGroupMember>(entity =>
-        {
-            entity.HasKey(e => e.WorkGroupMemberId);
-
-            entity.ToTable("WorkGroupMember");
-
-            entity.HasIndex(e => new { e.WorkGroupId, e.AdloginName }, "UX_WorkGroupMember_ActivePerGroup")
-                .IsUnique()
-                .HasFilter("[RemovedDateUtc] IS NULL");
-
-            entity.HasIndex(e => e.WorkGroupId, "IX_WorkGroupMember_WorkGroupId_Active")
-                .HasFilter("[RemovedDateUtc] IS NULL");
-
-            entity.HasIndex(e => e.AdloginName, "IX_WorkGroupMember_AdloginName_Active")
-                .HasFilter("[RemovedDateUtc] IS NULL");
+            entity
+                .HasNoKey()
+                .ToView("vw_CurrentEmployeeAvailability");
 
             entity.Property(e => e.AdloginName)
                 .IsRequired()
                 .HasMaxLength(100);
+            entity.Property(e => e.MaxWeeklyHours).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.MinWeeklyHours).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.PreferredAlertMethod)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<WorkGroup>(entity =>
+        {
+            entity.ToTable("WorkGroup");
+
+            entity.HasIndex(e => e.Name, "UX_WorkGroup_Name").IsUnique();
+
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.InsertedDateUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroup_Inserted")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_WorkGroup_IsActive");
+            entity.Property(e => e.LastUpdatedUtc)
+                .HasDefaultValueSql("(getutcdate())", "DF_WorkGroup_Updated")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<WorkGroupMember>(entity =>
+        {
+            entity.ToTable("WorkGroupMember");
+
+            entity.HasIndex(e => e.AdloginName, "IX_WorkGroupMember_AdloginName_Active").HasFilter("([RemovedDateUtc] IS NULL)");
+
+            entity.HasIndex(e => e.WorkGroupId, "IX_WorkGroupMember_WorkGroupId_Active").HasFilter("([RemovedDateUtc] IS NULL)");
+
+            entity.HasIndex(e => new { e.WorkGroupId, e.AdloginName }, "UX_WorkGroupMember_ActivePerGroup")
+                .IsUnique()
+                .HasFilter("([RemovedDateUtc] IS NULL)");
+
             entity.Property(e => e.AddedBy)
                 .IsRequired()
                 .HasMaxLength(100);
-            entity.Property(e => e.RemovedBy).HasMaxLength(100);
             entity.Property(e => e.AddedDateUtc)
                 .HasDefaultValueSql("(getutcdate())", "DF_WorkGroupMember_Added")
                 .HasColumnType("datetime");
+            entity.Property(e => e.AdloginName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.RemovedBy).HasMaxLength(100);
             entity.Property(e => e.RemovedDateUtc).HasColumnType("datetime");
 
             entity.HasOne(d => d.WorkGroup).WithMany(p => p.WorkGroupMembers)

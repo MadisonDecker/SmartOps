@@ -1,0 +1,178 @@
+@page "/availability"
+@using SmartOps.Models
+@using SmartShift.Blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>My Availability</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">My Availability</h1>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+            <span>Loading...</span>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+
+            <!-- Daily Availability -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Daily Availability Windows</h5>
+                        <small class="text-muted">Check the days you are available and set your earliest start and latest stop times.</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 140px;">Day</th>
+                                        <th style="width: 100px;">Available</th>
+                                        <th>Earliest Start</th>
+                                        <th>Latest Stop</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < 7; i++)
+                                    {
+                                        var dow = i;
+                                        <tr class="@(_dayEnabled[dow] ? "" : "text-muted")">
+                                            <td class="fw-medium align-middle">@DayNames[dow]</td>
+                                            <td class="align-middle">
+                                                <div class="form-check mb-0">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           checked="@_dayEnabled[dow]"
+                                                           @onchange="e => OnDayToggled(dow, e)" />
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                @if (_dayEnabled[dow])
+                                                {
+                                                    <input type="time" class="form-control form-control-sm"
+                                                           style="width: 140px;"
+                                                           value="@_dayEarliestStart[dow]"
+                                                           @oninput="e => _dayEarliestStart[dow] = e.Value?.ToString() ?? _dayEarliestStart[dow]" />
+                                                }
+                                                else
+                                                {
+                                                    <span>—</span>
+                                                }
+                                            </td>
+                                            <td class="align-middle">
+                                                @if (_dayEnabled[dow])
+                                                {
+                                                    <input type="time" class="form-control form-control-sm"
+                                                           style="width: 140px;"
+                                                           value="@_dayLatestStop[dow]"
+                                                           @oninput="e => _dayLatestStop[dow] = e.Value?.ToString() ?? _dayLatestStop[dow]" />
+                                                }
+                                                else
+                                                {
+                                                    <span>—</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Hours -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Weekly Hours</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" for="minHours">Minimum Hours</label>
+                                <input type="number" id="minHours" class="form-control"
+                                       min="0" max="168" step="0.5"
+                                       @bind="_minWeeklyHours" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="maxHours">Maximum Hours</label>
+                                <input type="number" id="maxHours" class="form-control"
+                                       min="0" max="168" step="0.5"
+                                       @bind="_maxWeeklyHours" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scheduling Preferences -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Scheduling Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="otSwitch"
+                                       @bind="_isOpenToOvertime" />
+                                <label class="form-check-label" for="otSwitch">Open to Overtime (OT)</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="vtoSwitch"
+                                       @bind="_isOpenToVto" />
+                                <label class="form-check-label" for="vtoSwitch">Open to Voluntary Time Off (VTO)</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="alertMethod">Preferred Alert Method</label>
+                            <select id="alertMethod" class="form-select"
+                                    @bind="_preferredAlertContactMethodId">
+                                @foreach (var method in _contactMethods)
+                                {
+                                    <option value="@((int)method.ContactMethodId)">@method.MethodName</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" for="notes">Notes</label>
+                            <textarea id="notes" class="form-control" rows="2"
+                                      placeholder="Any additional scheduling notes..."
+                                      @bind="_notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save -->
+            <div class="col-12">
+                @if (!string.IsNullOrEmpty(_saveError))
+                {
+                    <div class="alert alert-danger">@_saveError</div>
+                }
+                @if (_saveSuccess)
+                {
+                    <div class="alert alert-success">Availability saved successfully.</div>
+                }
+                <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Save Availability
+                </button>
+            </div>
+
+        </div>
+    }
+</div>

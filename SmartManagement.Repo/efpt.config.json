@@ -19,6 +19,18 @@
    "T4TemplatePath": null,
    "Tables": [
       {
+         "Name": "[dbo].[AlertContactMethod]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EmployeeAvailability]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EmployeeAvailabilityDay]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[EtimeShifts]",
          "ObjectType": 0
       },
@@ -55,8 +67,16 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Workgroup]",
+         "Name": "[dbo].[WorkGroup]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[WorkGroupMember]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[vw_CurrentEmployeeAvailability]",
+         "ObjectType": 3
       }
    ],
    "UiHint": null,

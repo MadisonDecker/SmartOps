@@ -13,6 +13,11 @@ public static class TimeOffRequestEndpoints
             .WithTags("TimeOff")
             .WithOpenApi();
 
+        group.MapGet("/team", GetTeamTimeOffRequests)
+            .WithName("GetTeamTimeOffRequests")
+            .WithSummary("Gets time-off requests for a list of employees by AD login")
+            .Produces<List<TimeOffRequestDto>>(StatusCodes.Status200OK);
+
         group.MapGet("/employee/{id}", GetTimeOffRequestsForEmployee)
             .WithName("GetTimeOffRequestsForEmployee")
             .WithSummary("Gets all time-off requests for an employee by AD login")
@@ -37,6 +42,17 @@ public static class TimeOffRequestEndpoints
             .Produces<TimeOffRequestDto>(StatusCodes.Status200OK)
             .Produces<string>(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound);
+    }
+
+    private static async Task<IResult> GetTeamTimeOffRequests(
+        string[] logins,
+        SmartOpsBusinessLogic businessLogic)
+    {
+        if (logins.Length == 0)
+            return Results.Ok(new List<TimeOffRequestDto>());
+
+        var requests = await businessLogic.GetTimeOffRequestsForTeamAsync(logins);
+        return Results.Ok(requests);
     }
 
     private static async Task<IResult> GetTimeOffRequestsForEmployee(

@@ -6,6 +6,20 @@ namespace SmartOpsManagement.Bus;
 public partial class SmartOpsBusinessLogic
 {
     /// <summary>
+    /// Returns all time-off requests for the given list of employees, newest first.
+    /// </summary>
+    public async Task<List<TimeOffRequestDto>> GetTimeOffRequestsForTeamAsync(IEnumerable<string> adLoginNames)
+    {
+        var logins = adLoginNames.ToList();
+        return await Task.FromResult(
+            _context.TimeOffRequests
+                .Where(r => logins.Contains(r.AdloginName))
+                .OrderByDescending(r => r.RequestedOn)
+                .Select(r => MapToDto(r))
+                .ToList());
+    }
+
+    /// <summary>
     /// Returns all time-off requests for the given employee, newest first.
     /// </summary>
     public async Task<List<TimeOffRequestDto>> GetTimeOffRequestsForUserAsync(string adLoginName)

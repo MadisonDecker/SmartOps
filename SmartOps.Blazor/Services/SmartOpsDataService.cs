@@ -105,4 +105,62 @@ public class SmartOpsDataService : ISmartOpsDataService
             return false;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<List<TimeOffRequestDto>> GetTeamTimeOffRequestsAsync(IEnumerable<string> adLoginNames)
+    {
+        try
+        {
+            var logins = adLoginNames.ToList();
+            if (logins.Count == 0) return [];
+
+            var queryParams = HttpUtility.ParseQueryString(string.Empty);
+            foreach (var login in logins)
+                queryParams.Add("logins", login);
+
+            var result = await _httpClient.GetFromJsonAsync<List<TimeOffRequestDto>>($"api/timeoff/team?{queryParams}");
+            return result ?? [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching team time-off requests");
+            return [];
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<TimeOffRequestDto?> ApproveTimeOffRequestAsync(int requestId, string reviewedBy, string? notes)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                $"api/timeoff/{requestId}/approve",
+                new { ReviewedBy = reviewedBy, Notes = notes });
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<TimeOffRequestDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error approving time-off request {RequestId}", requestId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<TimeOffRequestDto?> DenyTimeOffRequestAsync(int requestId, string reviewedBy, string? notes)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                $"api/timeoff/{requestId}/deny",
+                new { ReviewedBy = reviewedBy, Notes = notes });
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<TimeOffRequestDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error denying time-off request {RequestId}", requestId);
+            return null;
+        }
+    }
 }

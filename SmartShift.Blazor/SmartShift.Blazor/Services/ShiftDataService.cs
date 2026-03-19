@@ -202,4 +202,49 @@ public class ShiftDataService : IShiftDataService
             return null;
         }
     }
+
+    public async Task<List<AlertContactMethodDto>> GetContactMethodsAsync()
+    {
+        try
+        {
+            var client = CreateClient();
+            var result = await client.GetFromJsonAsync<List<AlertContactMethodDto>>("api/availability/contact-methods");
+            return result ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<EmployeeAvailabilityDto?> GetAvailabilityAsync(string adLoginName)
+    {
+        try
+        {
+            var client = CreateClient();
+            var resp = await client.GetAsync($"api/availability/{Uri.EscapeDataString(adLoginName)}");
+            if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+            if (!resp.IsSuccessStatusCode) return null;
+            return await resp.Content.ReadFromJsonAsync<EmployeeAvailabilityDto>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<EmployeeAvailabilityDto?> SaveAvailabilityAsync(string adLoginName, EmployeeAvailabilityDto dto)
+    {
+        try
+        {
+            var client = CreateClient();
+            var resp = await client.PutAsJsonAsync($"api/availability/{Uri.EscapeDataString(adLoginName)}", dto);
+            if (!resp.IsSuccessStatusCode) return null;
+            return await resp.Content.ReadFromJsonAsync<EmployeeAvailabilityDto>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
