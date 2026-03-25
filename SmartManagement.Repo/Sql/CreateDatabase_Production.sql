@@ -260,6 +260,11 @@ GO
 --    Submitted by employees; reviewed by supervisors.
 --    StartDate/EndDate = the requested off period (can span
 --    multiple days for vacation).
+--    IsPartialShift / PartialStart / PartialEnd allow the
+--    employee to request only part of a shift off (on-the-hour
+--    or half-hour boundaries only).
+--    PlanToMakeUpTime / MakeUpStart / MakeUpEnd let the
+--    employee indicate when they plan to make up the missed time.
 --    ScheduleExceptionId is populated when the request is
 --    approved and a ScheduleException row is created.
 --    (The FK to ScheduleException is added in Step 9 after
@@ -288,6 +293,16 @@ BEGIN
         -- Populated when approved and ScheduleException is created
         [ScheduleExceptionId] INT           NULL,
 
+        -- Partial-shift request (hour/half-hour boundaries only)
+        [IsPartialShift]      BIT           NOT NULL CONSTRAINT [DF_TimeOffRequest_IsPartialShift] DEFAULT 0,
+        [PartialStart]        TIME          NULL,       -- start of the partial window
+        [PartialEnd]          TIME          NULL,       -- end of the partial window
+
+        -- Make-up time
+        [PlanToMakeUpTime]    BIT           NOT NULL CONSTRAINT [DF_TimeOffRequest_PlanToMakeUpTime] DEFAULT 0,
+        [MakeUpStart]         DATETIME      NULL,       -- start of the make-up block
+        [MakeUpEnd]           DATETIME      NULL,       -- end of the make-up block
+
         -- Audit
         [InsertedDateUtc]     DATETIME      NOT NULL CONSTRAINT [DF_TimeOffRequest_Inserted] DEFAULT GETUTCDATE(),
         [LastUpdatedUtc]      DATETIME      NOT NULL CONSTRAINT [DF_TimeOffRequest_Updated]  DEFAULT GETUTCDATE(),
@@ -301,6 +316,16 @@ BEGIN
             CHECK (
                 ([ReviewedBy] IS NULL AND [ReviewedOn] IS NULL)
                 OR ([ReviewedBy] IS NOT NULL AND [ReviewedOn] IS NOT NULL)
+            ),
+        CONSTRAINT [CK_TimeOffRequest_PartialShiftTimes]
+            CHECK (
+                [IsPartialShift] = 0
+                OR ([PartialStart] IS NOT NULL AND [PartialEnd] IS NOT NULL AND [PartialEnd] > [PartialStart])
+            ),
+        CONSTRAINT [CK_TimeOffRequest_MakeUpRange]
+            CHECK (
+                [PlanToMakeUpTime] = 0
+                OR ([MakeUpStart] IS NOT NULL AND [MakeUpEnd] IS NOT NULL AND [MakeUpEnd] > [MakeUpStart])
             )
     );
 
@@ -506,7 +531,8 @@ WHERE t.schema_id = SCHEMA_ID('dbo')
       'TimeOffRequestStatus', 'ScheduleExceptionType',
       'ScheduleTemplate', 'ScheduleShiftPattern',
       'TimeOffRequest', 'ScheduleException',
-      'WorkGroup', 'WorkGroupMember'
+      'WorkGroup', 'WorkGroupMember',
+      'EmployeeAvailability', 'EmployeeAvailabilityDay'
   )
 GROUP BY t.name, t.object_id
 ORDER BY t.name;

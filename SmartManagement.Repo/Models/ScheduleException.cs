@@ -33,7 +33,5 @@ public partial class ScheduleException
 
     public virtual ScheduleTemplate ScheduleTemplate { get; set; }
 
-    public virtual TimeOffRequest TimeOffRequest { get; set; }
-
     public virtual ICollection<TimeOffRequest> TimeOffRequests { get; set; } = new List<TimeOffRequest>();
 }

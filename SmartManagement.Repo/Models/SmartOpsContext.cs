@@ -202,10 +202,6 @@ public partial class SmartOpsContext : DbContext
                 .HasForeignKey(d => d.ScheduleTemplateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Exception_Template");
-
-            entity.HasOne(d => d.TimeOffRequest).WithMany(p => p.ScheduleExceptions)
-                .HasForeignKey(d => d.TimeOffRequestId)
-                .HasConstraintName("FK_Exception_TimeOffRequest");
         });
 
         modelBuilder.Entity<ScheduleExceptionType>(entity =>
@@ -293,6 +289,8 @@ public partial class SmartOpsContext : DbContext
             entity.Property(e => e.LastUpdatedUtc)
                 .HasDefaultValueSql("(getutcdate())", "DF_TimeOffRequest_Updated")
                 .HasColumnType("datetime");
+            entity.Property(e => e.MakeUpEnd).HasColumnType("datetime");
+            entity.Property(e => e.MakeUpStart).HasColumnType("datetime");
             entity.Property(e => e.Reason)
                 .IsRequired()
                 .HasMaxLength(500);

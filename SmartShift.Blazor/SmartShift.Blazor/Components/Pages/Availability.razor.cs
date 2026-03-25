@@ -10,6 +10,9 @@ public partial class Availability : IDisposable
     private static readonly string[] DayNames =
         ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+    // Display order starts Monday (work week); index values are DayOfWeek (0=Sun…6=Sat)
+    private static readonly int[] DayDisplayOrder = [1, 2, 3, 4, 5, 6, 0];
+
     // ── Loading / save state ──────────────────────────────────────────────────
     private bool _isLoading = true;
     private bool _isSaving  = false;

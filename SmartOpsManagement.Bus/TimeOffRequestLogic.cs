@@ -56,14 +56,20 @@ public partial class SmartOpsBusinessLogic
         var now = DateTime.UtcNow;
         var entity = new TimeOffRequest
         {
-            AdloginName     = dto.AdloginName,
-            StartDate       = dto.StartDate,
-            EndDate         = dto.EndDate,
-            Reason          = dto.Reason,
-            StatusId        = (byte)TimeOffStatus.Pending,
-            RequestedOn     = now,
-            InsertedDateUtc = now,
-            LastUpdatedUtc  = now
+            AdloginName      = dto.AdloginName,
+            StartDate        = dto.StartDate,
+            EndDate          = dto.EndDate,
+            Reason           = dto.Reason,
+            StatusId         = (byte)TimeOffStatus.Pending,
+            RequestedOn      = now,
+            InsertedDateUtc  = now,
+            LastUpdatedUtc   = now,
+            IsPartialShift   = dto.IsPartialShift,
+            PartialStart     = dto.PartialStart,
+            PartialEnd       = dto.PartialEnd,
+            PlanToMakeUpTime = dto.PlanToMakeUpTime,
+            MakeUpStart      = dto.MakeUpStart,
+            MakeUpEnd        = dto.MakeUpEnd
         };
 
         _context.TimeOffRequests.Add(entity);
@@ -145,6 +151,12 @@ public partial class SmartOpsBusinessLogic
         ReviewedBy          = r.ReviewedBy,
         ReviewedOn          = r.ReviewedOn,
         ReviewNotes         = r.ReviewNotes,
-        ScheduleExceptionId = r.ScheduleExceptionId
+        ScheduleExceptionId = r.ScheduleExceptionId,
+        IsPartialShift      = r.IsPartialShift,
+        PartialStart        = r.PartialStart,
+        PartialEnd          = r.PartialEnd,
+        PlanToMakeUpTime    = r.PlanToMakeUpTime,
+        MakeUpStart         = r.MakeUpStart,
+        MakeUpEnd           = r.MakeUpEnd
     };
 }

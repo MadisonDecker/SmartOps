@@ -145,7 +145,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Employee</th>
-                                <th>Dates</th>
+                                <th>Dates / Hours</th>
                                 <th>Reason</th>
                                 <th>Requested</th>
                                 <th>Status</th>
@@ -157,7 +157,17 @@
                             {
                                 <tr>
                                     <td>@req.AdloginName</td>
-                                    <td class="text-nowrap">@FormatDateRange(req.StartDate, req.EndDate)</td>
+                                    <td class="text-nowrap">
+                                        @FormatDateRange(req.StartDate, req.EndDate)
+                                        @if (req.IsPartialShift && req.PartialStart.HasValue && req.PartialEnd.HasValue)
+                                        {
+                                            <br /><small class="text-muted">@req.PartialStart.Value.ToString("HH:mm") – @req.PartialEnd.Value.ToString("HH:mm")</small>
+                                        }
+                                        @if (req.PlanToMakeUpTime && req.MakeUpStart.HasValue && req.MakeUpEnd.HasValue)
+                                        {
+                                            <br /><small class="text-success">Make up: @req.MakeUpStart.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt") – @req.MakeUpEnd.Value.ToLocalTime().ToString("h:mm tt")</small>
+                                        }
+                                    </td>
                                     <td>@req.Reason</td>
                                     <td class="text-nowrap">@req.RequestedOn.ToLocalTime().ToString("MMM d, yyyy")</td>
                                     <td><span class="badge @GetStatusBadgeClass(req.Status)">@req.Status</span></td>

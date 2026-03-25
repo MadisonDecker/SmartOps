@@ -6,7 +6,8 @@
       "Bash(grep -r \"HttpContext\\\\.User\\\\|Identity\\\\.Name\\\\|IHttpContextAccessor\\\\|WindowsIdentity\\\\|User\\\\.FindFirst\" /d/Code/Git/MadisonDecker/SmartOps --include=*.cs)",
       "Bash(grep -r \"adloginName\\\\|AdloginName\\\\|AdLogin\" /d/Code/Git/MadisonDecker/SmartOps --include=*.cs)",
       "Bash(find /d/Code/Git/MadisonDecker/SmartOps/SmartOpsManagement.WebApi -name Program.cs -o -name *Endpoints*)",
-      "Bash(find /d/Code/Git/MadisonDecker/SmartOps/SmartOps.Models -name *.cs)"
+      "Bash(find /d/Code/Git/MadisonDecker/SmartOps/SmartOps.Models -name *.cs)",
+      "Bash(find D:CodeGitMadisonDeckerSmartOpsSmartOps.Shared.UI -name *.razor)"
     ]
   }
 }

@@ -54,7 +54,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @if (shifts != null && shifts.Any())
+                    @{
+                        var approvedTimeOff = GetApprovedTimeOffInWeek();
+                        var makeUpTime      = GetMakeUpTimeInWeek();
+                        var hasContent      = (shifts != null && shifts.Any()) || approvedTimeOff.Any() || makeUpTime.Any();
+                    }
+                    @if (hasContent)
                     {
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
@@ -70,62 +75,116 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var shift in shifts.OrderBy(s => s.StartTime))
+                                    @if (shifts != null)
                                     {
-                                        <tr>
-                                            <td>@shift.StartTime.ToString("ddd, MMM dd")</td>
-                                            <td>@(shift.ClientName ?? "-")</td>
-                                            <td>@shift.StartTime.ToString("HH:mm")</td>
-                                            <td>@shift.EndTime.ToString("HH:mm")</td>
-                                            <td>@Math.Round((shift.EndTime - shift.StartTime).TotalHours, 2) hrs</td>
-                                            <td>
-                                                <span class="badge @GetStatusBadgeClass(shift.Status)">
-                                                    @shift.Status
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @{
-                                                    var tor = GetActiveRequest(shift);
-                                                }
-                                                @if (tor != null)
-                                                {
-                                                    var (badgeClass, label) = tor.Status switch
-                                                    {
-                                                        TimeOffStatus.Approved => ("bg-success", "Approved"),
-                                                        TimeOffStatus.Denied   => ("bg-danger",  "Denied"),
-                                                        _                      => ("bg-warning text-dark", "Pending")
-                                                    };
-                                                    <span class="badge @badgeClass" title="@tor.ReviewNotes">@label</span>
-                                                }
-                                                else if (CanRequestTimeOff(shift))
-                                                {
-                                                    <button class="btn btn-sm btn-outline-warning"
-                                                            @onclick="() => OpenTimeOffModal(shift)">
-                                                        Request Time Off
-                                                    </button>
-                                                }
-                                            </td>
-                                        </tr>
-                                        @if (shift.Breaks.Any())
+                                        @foreach (var shift in shifts.OrderBy(s => s.StartTime))
                                         {
-                                            <tr class="table-light">
-                                                <td colspan="7">
-                                                    <small class="text-muted">
-                                                        <strong>Breaks:</strong>
-                                                        @foreach (var breakItem in shift.Breaks)
+                                            <tr>
+                                                <td>@shift.StartTime.ToString("ddd, MMM dd")</td>
+                                                <td>@(shift.ClientName ?? "-")</td>
+                                                <td>@shift.StartTime.ToString("HH:mm")</td>
+                                                <td>@shift.EndTime.ToString("HH:mm")</td>
+                                                <td>@Math.Round((shift.EndTime - shift.StartTime).TotalHours, 2) hrs</td>
+                                                <td>
+                                                    <span class="badge @GetStatusBadgeClass(shift.Status)">
+                                                        @shift.Status
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        var tor = GetAnyRequest(shift);
+                                                    }
+                                                    @if (tor != null)
+                                                    {
+                                                        var (badgeClass, label) = tor.Status switch
                                                         {
-                                                            <span class="badge bg-info me-2">
-                                                                @breakItem.BreakType @breakItem.StartTime.ToString("HH:mm")-@breakItem.EndTime.ToString("HH:mm")
-                                                                @if (breakItem.IsTaken)
-                                                                {
-                                                                    <span>✓</span>
-                                                                }
-                                                            </span>
+                                                            TimeOffStatus.Approved => ("bg-success", "Approved"),
+                                                            TimeOffStatus.Denied   => ("bg-danger",  "Denied"),
+                                                            _                      => ("bg-warning text-dark", "Pending")
+                                                        };
+                                                        <span class="badge @badgeClass" title="@tor.ReviewNotes">@label</span>
+                                                        @if (tor.Status == TimeOffStatus.Denied && !string.IsNullOrEmpty(tor.ReviewNotes))
+                                                        {
+                                                            <br /><small class="text-muted">@tor.ReviewNotes</small>
                                                         }
+                                                    }
+                                                    else if (CanRequestTimeOff(shift))
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-warning"
+                                                                @onclick="() => OpenTimeOffModal(shift)">
+                                                            Request Time Off
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                            @if (shift.Breaks.Any())
+                                            {
+                                                <tr class="table-light">
+                                                    <td colspan="7">
+                                                        <small class="text-muted">
+                                                            <strong>Breaks:</strong>
+                                                            @foreach (var breakItem in shift.Breaks)
+                                                            {
+                                                                <span class="badge bg-info me-2">
+                                                                    @breakItem.BreakType @breakItem.StartTime.ToString("HH:mm")-@breakItem.EndTime.ToString("HH:mm")
+                                                                    @if (breakItem.IsTaken)
+                                                                    {
+                                                                        <span>✓</span>
+                                                                    }
+                                                                </span>
+                                                            }
+                                                        </small>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    }
+                                    @* Approved time-off rows — shown for dates where the shift was
+                                       suppressed by a ScheduleException so the employee can see the approval. *@
+                                    @for (int dayOffset = 0; dayOffset < 7; dayOffset++)
+                                    {
+                                        var date   = DateOnly.FromDateTime(weekStart.AddDays(dayOffset));
+                                        var appTor = approvedTimeOff.FirstOrDefault(r =>
+                                            r.StartDate <= date && r.EndDate >= date);
+                                        @if (appTor != null)
+                                        {
+                                            <tr class="table-success">
+                                                <td>@date.ToString("ddd, MMM dd")</td>
+                                                <td>—</td>
+                                                <td colspan="2">
+                                                    <small class="fst-italic text-muted">
+                                                        @(appTor.IsPartialShift ? "Partial Time Off" : "Time Off")
+                                                        @if (!string.IsNullOrEmpty(appTor.Reason))
+                                                        {
+                                                            <text> — @appTor.Reason</text>
+                                                        }
+                                                    </small>
+                                                </td>
+                                                <td>—</td>
+                                                <td><span class="badge bg-success">Approved</span></td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        @appTor.ReviewedBy<br />@appTor.ReviewedOn?.ToLocalTime().ToString("MMM d, yyyy")
                                                     </small>
                                                 </td>
                                             </tr>
                                         }
+                                    }
+                                    @* Make-up time rows — temporary additions committed by the employee.
+                                       Not a ScheduleException; surfaced directly from the TimeOffRequest. *@
+                                    @foreach (var mu in makeUpTime)
+                                    {
+                                        var muStart = mu.MakeUpStart!.Value.ToLocalTime();
+                                        var muEnd   = mu.MakeUpEnd!.Value.ToLocalTime();
+                                        <tr class="table-info">
+                                            <td>@muStart.ToString("ddd, MMM dd")</td>
+                                            <td>—</td>
+                                            <td>@muStart.ToString("HH:mm")</td>
+                                            <td>@muEnd.ToString("HH:mm")</td>
+                                            <td>@Math.Round((muEnd - muStart).TotalHours, 2) hrs</td>
+                                            <td><span class="badge bg-info text-dark">Make-Up Time</span></td>
+                                            <td><small class="text-muted">For: @mu.StartDate.ToString("MMM d")</small></td>
+                                        </tr>
                                     }
                                 </tbody>
                             </table>
@@ -155,11 +214,88 @@
                         <strong>Shift:</strong> @selectedShift.StartTime.ToString("dddd, MMMM dd yyyy")<br />
                         <strong>Time:</strong> @selectedShift.StartTime.ToString("HH:mm") – @selectedShift.EndTime.ToString("HH:mm")
                     </p>
+
                     <div class="mb-3">
                         <label class="form-label">Reason <span class="text-danger">*</span></label>
                         <textarea class="form-control" rows="3" placeholder="Briefly describe your reason for the request"
                                   @bind="timeOffReason"></textarea>
                     </div>
+
+                    <!-- Partial shift -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="partialShiftCheck"
+                                   @bind="_isPartialShift" />
+                            <label class="form-check-label" for="partialShiftCheck">Partial shift request</label>
+                        </div>
+                        @if (_isPartialShift)
+                        {
+                            <div class="row g-2 mt-1">
+                                <div class="col-6">
+                                    <label class="form-label mb-1">From</label>
+                                    <select class="form-select form-select-sm"
+                                            @bind="_partialStart"
+                                            @bind:after="OnPartialStartChanged">
+                                        @foreach (var slot in GetPartialStartSlots())
+                                        {
+                                            <option value="@slot">@FormatTimeSlot(slot)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label mb-1">To</label>
+                                    <select class="form-select form-select-sm" @bind="_partialEnd">
+                                        @foreach (var slot in GetPartialEndSlots())
+                                        {
+                                            <option value="@slot">@FormatTimeSlot(slot)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-text">Times are limited to your scheduled shift (@FormatTimeSlot(SnapToHalfHour(selectedShift!.StartTime).ToString("HH:mm")) – @FormatTimeSlot(SnapToHalfHour(selectedShift!.EndTime).ToString("HH:mm"))).</div>
+                        }
+                    </div>
+
+                    <!-- Make-up time -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="makeUpTimeCheck"
+                                   @bind="_planToMakeUpTime" />
+                            <label class="form-check-label" for="makeUpTimeCheck">Plan to make up time</label>
+                        </div>
+                        @if (_planToMakeUpTime)
+                        {
+                            <div class="row g-2 mt-1">
+                                <div class="col-12 col-sm-5">
+                                    <label class="form-label mb-1">Date</label>
+                                    <input type="date" class="form-control form-control-sm"
+                                           @bind="_makeUpDate" />
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="form-label mb-1">From</label>
+                                    <select class="form-select form-select-sm"
+                                            @bind="_makeUpStartTime"
+                                            @bind:after="OnMakeUpStartTimeChanged">
+                                        @foreach (var slot in GetAllHalfHourSlots())
+                                        {
+                                            <option value="@slot">@FormatTimeSlot(slot)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-6 col-sm-4">
+                                    <label class="form-label mb-1">To</label>
+                                    <select class="form-select form-select-sm" @bind="_makeUpEndTime">
+                                        @foreach (var slot in GetMakeUpEndSlots())
+                                        {
+                                            <option value="@slot">@FormatTimeSlot(slot)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-text">You will be notified if this conflicts with a scheduled shift.</div>
+                        }
+                    </div>
+
                     @if (!string.IsNullOrEmpty(timeOffError))
                     {
                         <div class="alert alert-danger py-2">@timeOffError</div>

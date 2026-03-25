@@ -25,6 +25,21 @@ public class TimeOffRequestDto
     public DateTime? ReviewedOn { get; set; }
     public string? ReviewNotes { get; set; }
 
+    // Partial-shift request
+    /// <summary>True when the employee only needs part of the shift off.</summary>
+    public bool IsPartialShift { get; set; }
+    /// <summary>Start of the partial window (null if full shift).</summary>
+    public TimeOnly? PartialStart { get; set; }
+    /// <summary>End of the partial window (null if full shift).</summary>
+    public TimeOnly? PartialEnd { get; set; }
+
+    // Make-up time
+    public bool PlanToMakeUpTime { get; set; }
+    /// <summary>Start of the make-up block (required when PlanToMakeUpTime is true).</summary>
+    public DateTime? MakeUpStart { get; set; }
+    /// <summary>End of the make-up block (required when PlanToMakeUpTime is true).</summary>
+    public DateTime? MakeUpEnd { get; set; }
+
     // Populated when the request is approved and a ScheduleException is created
     public int? ScheduleExceptionId { get; set; }
 }

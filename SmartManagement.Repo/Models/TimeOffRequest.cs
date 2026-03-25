@@ -29,6 +29,18 @@ public partial class TimeOffRequest
 
     public int? ScheduleExceptionId { get; set; }
 
+    public bool IsPartialShift { get; set; }
+
+    public TimeOnly? PartialStart { get; set; }
+
+    public TimeOnly? PartialEnd { get; set; }
+
+    public bool PlanToMakeUpTime { get; set; }
+
+    public DateTime? MakeUpStart { get; set; }
+
+    public DateTime? MakeUpEnd { get; set; }
+
     public DateTime InsertedDateUtc { get; set; }
 
     public DateTime LastUpdatedUtc { get; set; }
@@ -36,8 +48,6 @@ public partial class TimeOffRequest
     public byte[] Timestamp { get; set; }
 
     public virtual ScheduleException ScheduleException { get; set; }
-
-    public virtual ICollection<ScheduleException> ScheduleExceptions { get; set; } = new List<ScheduleException>();
 
     public virtual TimeOffRequestStatus Status { get; set; }
 }
