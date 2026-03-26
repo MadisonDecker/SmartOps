@@ -174,7 +174,7 @@ public partial class SmartOpsBusinessLogic
             .ToList();
 
         var shifts = new List<ScheduledShift>();
-        var now    = DateTime.UtcNow;
+        var now    = DateTime.Now;
         var day    = startDate;
 
         while (day <= endDate)
@@ -233,27 +233,75 @@ public partial class SmartOpsBusinessLogic
 
     /// <summary>
     /// Returns the next scheduled shift for the employee, looking up to 90 days ahead.
-    /// Respects ScheduleExceptions (e.g. approved time off).
+    /// Excludes days covered by approved time-off and includes approved make-up time.
     /// </summary>
     public async Task<ScheduledShift?> GetNextScheduledShiftForUserAsync(string adLogin)
     {
-        var today      = DateOnly.FromDateTime(DateTime.UtcNow);
-        var lookAhead  = today.AddDays(90);
-        var shifts     = await GetScheduledShiftsForUserAsync(adLogin, today, lookAhead);
-        var now        = DateTime.UtcNow;
-        return shifts.Where(s => s.StartTime > now).OrderBy(s => s.StartTime).FirstOrDefault();
+        var today     = DateOnly.FromDateTime(DateTime.Now);
+        var lookAhead = today.AddDays(90);
+        var now       = DateTime.Now;
+
+        var shifts          = await GetScheduledShiftsForUserAsync(adLogin, today, lookAhead);
+        var timeOffRequests = await GetTimeOffRequestsForUserAsync(adLogin);
+
+        var approvedTimeOff = timeOffRequests
+            .Where(r => r.Status == TimeOffStatus.Approved)
+            .ToList();
+
+        // Exclude any regular shifts that fall on an approved time-off date
+        var regularNext = shifts
+            .Where(s => s.StartTime > now &&
+                        !approvedTimeOff.Any(r =>
+                            r.StartDate <= DateOnly.FromDateTime(s.StartTime) &&
+                            r.EndDate   >= DateOnly.FromDateTime(s.StartTime)))
+            .OrderBy(s => s.StartTime)
+            .FirstOrDefault();
+
+        var makeUpNext = approvedTimeOff
+            .Where(r => r.PlanToMakeUpTime      &&
+                        r.MakeUpStart.HasValue  &&
+                        r.MakeUpEnd.HasValue    &&
+                        r.MakeUpStart.Value > now)
+            .Select(r => new ScheduledShift
+            {
+                EmployeeId = adLogin,
+                StartTime  = r.MakeUpStart!.Value,
+                EndTime    = r.MakeUpEnd!.Value,
+                Status     = ShiftStatus.Scheduled
+            })
+            .OrderBy(s => s.StartTime)
+            .FirstOrDefault();
+
+        if (regularNext == null) return makeUpNext;
+        if (makeUpNext  == null) return regularNext;
+        return makeUpNext.StartTime < regularNext.StartTime ? makeUpNext : regularNext;
     }
 
     /// <summary>
-    /// Calculates total scheduled hours (net of breaks) for the employee's week.
+    /// Calculates total scheduled hours (net of breaks) for the employee's week,
+    /// including any approved make-up time that falls within the week.
     /// </summary>
     public async Task<double> GetWeeklyHoursForUserAsync(string adLogin, DateOnly weekStart)
     {
         var weekEnd = weekStart.AddDays(6);
         var shifts  = await GetScheduledShiftsForUserAsync(adLogin, weekStart, weekEnd);
-        return shifts.Sum(s =>
+        var shiftHours = shifts.Sum(s =>
             (s.EndTime - s.StartTime).TotalHours
             - s.Breaks.Sum(b => (b.EndTime - b.StartTime).TotalMinutes) / 60.0);
+
+        var timeOffRequests = await GetTimeOffRequestsForUserAsync(adLogin);
+        var weekStartDt = weekStart.ToDateTime(TimeOnly.MinValue);
+        var weekEndDt   = weekEnd.ToDateTime(TimeOnly.MaxValue);
+        var makeUpHours = timeOffRequests
+            .Where(r => r.Status          == TimeOffStatus.Approved &&
+                        r.PlanToMakeUpTime                          &&
+                        r.MakeUpStart.HasValue                      &&
+                        r.MakeUpEnd.HasValue                        &&
+                        r.MakeUpStart.Value >= weekStartDt          &&
+                        r.MakeUpStart.Value <= weekEndDt)
+            .Sum(r => (r.MakeUpEnd!.Value - r.MakeUpStart!.Value).TotalHours);
+
+        return shiftHours + makeUpHours;
     }
 
     // -------------------------------------------------------------------------
